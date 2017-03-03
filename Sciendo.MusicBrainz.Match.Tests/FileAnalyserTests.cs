@@ -134,8 +134,8 @@ namespace Sciendo.MusicBrainz.Match.Tests
             Assert.AreEqual(fileAnalysed.Id3Tag.Artists.TextValue,"my artist");
             Assert.AreEqual(fileAnalysed.Id3Tag.Title.TextValue,"my song");
             Assert.AreEqual(fileAnalysed.FilePath,"myownfile.mp3");
-            Assert.False(fileAnalysed.ShouldBePartOfCollection);
-            Assert.False(fileAnalysed.IsPartOfCollection);
+            Assert.False(fileAnalysed.InCollectionPath);
+            Assert.False(fileAnalysed.MarkedAsPartOfCollection);
             Assert.True(fileAnalysed.Id3TagComplete);
             
         }
@@ -169,8 +169,8 @@ namespace Sciendo.MusicBrainz.Match.Tests
             Assert.AreEqual(fileAnalysed.Id3Tag.Artists.TextValue, "my artist");
             Assert.AreEqual(fileAnalysed.Id3Tag.Title.TextValue, "my song");
             Assert.AreEqual(fileAnalysed.FilePath, @"..\myownfile.mp3");
-            Assert.True(fileAnalysed.ShouldBePartOfCollection);
-            Assert.True(fileAnalysed.IsPartOfCollection);
+            Assert.True(fileAnalysed.InCollectionPath);
+            Assert.True(fileAnalysed.MarkedAsPartOfCollection);
             Assert.True(fileAnalysed.Id3TagComplete);
 
         }
@@ -204,8 +204,8 @@ namespace Sciendo.MusicBrainz.Match.Tests
             Assert.AreEqual(fileAnalysed.Id3Tag.Artists.TextValue, "my artist");
             Assert.AreEqual(fileAnalysed.Id3Tag.Title.TextValue, "my song");
             Assert.AreEqual(fileAnalysed.FilePath, @"myownfile.mp3");
-            Assert.False(fileAnalysed.ShouldBePartOfCollection);
-            Assert.True(fileAnalysed.IsPartOfCollection);
+            Assert.False(fileAnalysed.InCollectionPath);
+            Assert.True(fileAnalysed.MarkedAsPartOfCollection);
             Assert.True(fileAnalysed.Id3TagComplete);
 
         }
@@ -239,8 +239,8 @@ namespace Sciendo.MusicBrainz.Match.Tests
             Assert.AreEqual(fileAnalysed.Id3Tag.Artists.TextValue, "my artist");
             Assert.AreEqual(fileAnalysed.Id3Tag.Title.TextValue, "my song");
             Assert.AreEqual(fileAnalysed.FilePath, @"..\myownfile.mp3");
-            Assert.True(fileAnalysed.ShouldBePartOfCollection);
-            Assert.False(fileAnalysed.IsPartOfCollection);
+            Assert.True(fileAnalysed.InCollectionPath);
+            Assert.False(fileAnalysed.MarkedAsPartOfCollection);
             Assert.True(fileAnalysed.Id3TagComplete);
 
         }
@@ -274,8 +274,8 @@ namespace Sciendo.MusicBrainz.Match.Tests
             Assert.AreEqual(fileAnalysed.Id3Tag.Artists.TextValue, "my artist");
             Assert.AreEqual(fileAnalysed.Id3Tag.Title.TextValue, "my song");
             Assert.AreEqual(fileAnalysed.FilePath, @"..\myownfile.mp3");
-            Assert.True(fileAnalysed.ShouldBePartOfCollection);
-            Assert.False(fileAnalysed.IsPartOfCollection);
+            Assert.True(fileAnalysed.InCollectionPath);
+            Assert.False(fileAnalysed.MarkedAsPartOfCollection);
             Assert.True(fileAnalysed.Id3TagComplete);
 
         }

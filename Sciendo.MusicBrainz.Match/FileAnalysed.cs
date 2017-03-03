@@ -14,9 +14,11 @@ namespace Sciendo.MusicBrainz.Match
 
         public IId3Tag Id3Tag { get; set; }
 
-        public bool IsPartOfCollection { get; set; }
+        public bool MarkedAsPartOfCollection { get; set; }
 
-        public bool ShouldBePartOfCollection { get; set; }
+        public bool PossiblePartOfACollection { get; set; }
+
+        public bool InCollectionPath { get; set; }
 
         public bool Id3TagComplete { get
         {

@@ -25,6 +25,7 @@ namespace Sciendo.MusicBrainz.Match
             _collectionPaths = collectionPaths;
             _fileSystem = fileSystem;
             _collectionMarker = collectionMarker;
+            StopActivity = false;
         }
 
         public FileAnalysed AnalyseFile(IMp3Stream mp3File, string filePath)
@@ -36,6 +37,8 @@ namespace Sciendo.MusicBrainz.Match
                 throw new ArgumentNullException(nameof(filePath));
             if(!_fileSystem.FileExists(filePath))
                 throw new ArgumentException("File does not exist.",nameof(filePath));
+            if(AnalyserProgress!=null)
+                AnalyserProgress(this,new AnalyserProgressEventArgs(filePath));
             if(!mp3File.HasTags)
                 return new FileAnalysed { Id3Tag = null, FilePath = filePath };
             var availableTagVersions = mp3File.AvailableTagVersions.OrderBy(v => v.Major).LastOrDefault();
@@ -55,8 +58,8 @@ namespace Sciendo.MusicBrainz.Match
             {
                 Id3Tag = id3Tag,
                 FilePath = filePath,
-                ShouldBePartOfCollection = _collectionPaths.Any(c => filePath.ToLower().Contains(c.ToLower())),
-                IsPartOfCollection=isPartOfCollection
+                InCollectionPath = _collectionPaths.Any(c => filePath.ToLower().Contains(c.ToLower())),
+                MarkedAsPartOfCollection=isPartOfCollection
             };
         }
 
@@ -68,5 +71,8 @@ namespace Sciendo.MusicBrainz.Match
         {
             get { return _collectionMarker;}
         }
+
+        public bool StopActivity { get; set; }
+        public event EventHandler<AnalyserProgressEventArgs> AnalyserProgress;
     }
 }

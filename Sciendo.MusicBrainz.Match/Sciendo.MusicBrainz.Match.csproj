@@ -38,7 +38,16 @@
       <HintPath>..\packages\Id3.Files.1.0.0-Build00001\lib\net451\Id3.Files.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="log4net, Version=1.2.13.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
+      <HintPath>..\packages\log4net.2.0.3\lib\net40-full\log4net.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Sciendo.Common, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Sciendo.Common.1.0.0-Build00016\lib\net40\Sciendo.Common.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -48,13 +57,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AnalyserProgressEventArgs.cs" />
+    <Compile Include="Configuration\AnalyserConfigurationSection.cs" />
+    <Compile Include="Configuration\FileSystemConfigurationSection.cs" />
+    <Compile Include="DirectoryReadEventArgs.cs" />
+    <Compile Include="ExtensionsReadEventArgs.cs" />
     <Compile Include="FileAnalysed.cs" />
     <Compile Include="FileSystem.cs" />
-    <Compile Include="FluentExtensions.cs" />
     <Compile Include="IFileSystem.cs" />
     <Compile Include="IAnalyser.cs" />
+    <Compile Include="IRunner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="FileAnalyser.cs" />
+    <Compile Include="Runner.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
