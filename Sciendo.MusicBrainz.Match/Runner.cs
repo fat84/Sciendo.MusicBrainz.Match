@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Id3;
 using Sciendo.Common.Serialization;
+using Sciendo.IOC;
 
 namespace Sciendo.MusicBrainz.Match
 {
@@ -19,6 +20,7 @@ namespace Sciendo.MusicBrainz.Match
         private List<FileAnalysed> _filesAnalysed;
         private bool _fileSystemStopped=false;
         private bool _analyserStopped = false;
+        private Container _container;
 
         public Runner(IFileSystem fileSystem, string path, string[] extensions, IAnalyser analyser, string outputFilePath="")
         {
@@ -38,6 +40,7 @@ namespace Sciendo.MusicBrainz.Match
             _analyser = analyser;
             _outputFilePath = outputFilePath;
             _filesAnalysed=new List<FileAnalysed>();
+            _container = Container.GetInstance();
         }
         public virtual void Initialize()
         {
@@ -75,9 +78,10 @@ namespace Sciendo.MusicBrainz.Match
                         Serializer.SerializeToFile(_filesAnalysed,_outputFilePath);
                     break;
                 }
-                var fileAnalysed = _analyser.AnalyseFile(new Mp3File(file), file);
+                var newMp3File = _container.ResolveToNew<IMp3Stream>(_analyser.Mp3IocKey, file);
+                var fileAnalysed = _analyser.AnalyseFile(newMp3File, file);
                 if (!string.IsNullOrEmpty(previousArtist) && fileAnalysed.Id3TagComplete &&
-                    previousArtist != fileAnalysed.Id3Tag.Artists.TextValue)
+                    previousArtist != fileAnalysed.Artist)
                 {
                     fileAnalysed.PossiblePartOfACollection = true;
                 }

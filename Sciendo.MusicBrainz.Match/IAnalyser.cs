@@ -18,5 +18,7 @@ namespace Sciendo.MusicBrainz.Match
         bool StopActivity { get; set; }
 
         event EventHandler<AnalyserProgressEventArgs> AnalyserProgress;
+
+        string Mp3IocKey { get; }
     }
 }

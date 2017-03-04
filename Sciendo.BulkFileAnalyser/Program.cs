@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Id3;
+using Sciendo.IOC;
 using Sciendo.MusicBrainz.Match;
 using Sciendo.MusicBrainz.Match.Configuration;
 
@@ -23,7 +25,11 @@ namespace Sciendo.BulkFileAnalyser
             var collectionMarker =
                 ((AnalyserConfigurationSection) ConfigurationManager.GetSection("analyser")).CollectionMarker;
 
+           
+
             var analyser = new FileAnalyser(collectionPaths, fileSystem, collectionMarker);
+            Container.GetInstance().Add(new RegisteredType().For<Mp3File>().BasedOn<IMp3Stream>().With(LifeStyle.Transient).IdentifiedBy(analyser.Mp3IocKey));
+
             fileSystem.ExtensionsRead += FileSystem_ExtensionsRead;
             fileSystem.DirectoryRead += FileSystem_DirectoryRead;
             analyser.AnalyserProgress += Analyser_AnalyserProgress;

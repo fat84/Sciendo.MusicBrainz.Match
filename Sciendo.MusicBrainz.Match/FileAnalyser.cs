@@ -40,10 +40,10 @@ namespace Sciendo.MusicBrainz.Match
             if(AnalyserProgress!=null)
                 AnalyserProgress(this,new AnalyserProgressEventArgs(filePath));
             if(!mp3File.HasTags)
-                return new FileAnalysed { Id3Tag = null, FilePath = filePath };
+                return new FileAnalysed { Artist = null, Album=null,Title=null, FilePath = filePath };
             var availableTagVersions = mp3File.AvailableTagVersions.OrderBy(v => v.Major).LastOrDefault();
             if (availableTagVersions == null)
-                return new FileAnalysed {Id3Tag = null, FilePath = filePath};
+                return new FileAnalysed { Artist = null, Album = null, Title = null, FilePath = filePath};
             var id3Tag = mp3File.GetTag(availableTagVersions.Major, availableTagVersions.Minor);
             bool isPartOfCollection = false;
             if (id3Tag == null || id3Tag.Band == null || id3Tag.Artists==null)
@@ -56,7 +56,9 @@ namespace Sciendo.MusicBrainz.Match
             }
             return new FileAnalysed
             {
-                Id3Tag = id3Tag,
+                Artist = id3Tag.Artists.TextValue,
+                Album=id3Tag.Album.TextValue,
+                Title=id3Tag.Title.TextValue,
                 FilePath = filePath,
                 InCollectionPath = _collectionPaths.Any(c => filePath.ToLower().Contains(c.ToLower())),
                 MarkedAsPartOfCollection=isPartOfCollection
@@ -74,5 +76,6 @@ namespace Sciendo.MusicBrainz.Match
 
         public bool StopActivity { get; set; }
         public event EventHandler<AnalyserProgressEventArgs> AnalyserProgress;
+        public string Mp3IocKey { get { return "MP3IOCKEY"; } }
     }
 }

@@ -12,7 +12,12 @@ namespace Sciendo.MusicBrainz.Match
     {
         public string FilePath { get; set; }
 
-        public IId3Tag Id3Tag { get; set; }
+
+        public string Artist { get; set; }
+
+        public string Album { get; set; }
+
+        public string Title { get; set; }
 
         public bool MarkedAsPartOfCollection { get; set; }
 
@@ -22,8 +27,8 @@ namespace Sciendo.MusicBrainz.Match
 
         public bool Id3TagComplete { get
         {
-            return !string.IsNullOrEmpty(Id3Tag.Album.TextValue) || !Id3Tag.Artists.Value.Any() ||
-                   !string.IsNullOrEmpty(Id3Tag.Title.TextValue);
+            return !string.IsNullOrEmpty(Album) || !string.IsNullOrEmpty(Artist) ||
+                   !string.IsNullOrEmpty(Title);
         } }
     }
 }
