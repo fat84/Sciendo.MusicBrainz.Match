@@ -9,7 +9,7 @@ using NUnit.Framework.Constraints;
 namespace Sciendo.MusicBrainz.Match.Tests
 {
     [TestFixture]
-    public class FileLooperTests
+    public class FileSystemTests
     {
         [Test]
         public void GetFilesNoPath()

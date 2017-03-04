@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -19,8 +20,18 @@ namespace Sciendo.MusicBrainz.Match
         private bool _fileSystemStopped=false;
         private bool _analyserStopped = false;
 
-        public Runner(IFileSystem fileSystem, string path, string[] extensions, IAnalyser analyser, string outputFilePath)
+        public Runner(IFileSystem fileSystem, string path, string[] extensions, IAnalyser analyser, string outputFilePath="")
         {
+            if(fileSystem==null)
+                throw new ArgumentNullException(nameof(fileSystem));
+            if(string.IsNullOrEmpty(path))
+                throw new ArgumentNullException(nameof(path));
+            if(extensions==null || !extensions.Any())
+                throw new ArgumentNullException(nameof(extensions));
+            if(analyser==null)
+                throw new ArgumentNullException(nameof(analyser));
+            if(!Directory.Exists(path))
+                throw new ArgumentException("Folder does not exist",nameof(path));
             _fileSystem = fileSystem;
             _path = path;
             _extensions = extensions;
@@ -28,7 +39,7 @@ namespace Sciendo.MusicBrainz.Match
             _outputFilePath = outputFilePath;
             _filesAnalysed=new List<FileAnalysed>();
         }
-        public void Initialize()
+        public virtual void Initialize()
         {
             throw new NotImplementedException();
         }
@@ -36,30 +47,35 @@ namespace Sciendo.MusicBrainz.Match
         public void Start()
         {
             var folders = _fileSystem.GetLeafDirectories(_path);
-            foreach (var folder in folders)
-            {
-                if (_fileSystem.StopActivity || _analyser.StopActivity)
+            if(folders!=null)
+                foreach (var folder in folders)
                 {
-                    Serializer.SerializeToFile(_filesAnalysed,_outputFilePath);
-                    return;
+                    if (_fileSystem.StopActivity || _analyser.StopActivity)
+                    {
+                        Serializer.SerializeToFile(_filesAnalysed,_outputFilePath);
+                        return;
+                    }
+                    _filesAnalysed.AddRange(RunDirectory(folder));
                 }
-                _filesAnalysed.AddRange(RunDirectory(folder));
-            }
-            Serializer.SerializeToFile(_filesAnalysed,_outputFilePath);
+            _filesAnalysed.AddRange(RunDirectory(_path));
+            if(!string.IsNullOrEmpty(_outputFilePath))
+                Serializer.SerializeToFile(_filesAnalysed,_outputFilePath);
         }
 
         private IEnumerable<FileAnalysed> RunDirectory(string path)
         {
             var previousArtist = string.Empty;
             var files = _fileSystem.GetFiles(path, _extensions);
+            if (files == null) yield break;
             foreach (var file in files)
             {
                 if (_fileSystem.StopActivity || _analyser.StopActivity)
                 {
-                    Serializer.SerializeToFile(_filesAnalysed,_outputFilePath);
+                    if(string.IsNullOrEmpty(_outputFilePath))
+                        Serializer.SerializeToFile(_filesAnalysed,_outputFilePath);
                     break;
                 }
-                var fileAnalysed = _analyser.AnalyseFile(new Mp3File(file), file);
+                var fileAnalysed = _analyser.AnalyseFile(new Mp3File(), file);
                 if (!string.IsNullOrEmpty(previousArtist) && fileAnalysed.Id3TagComplete &&
                     previousArtist != fileAnalysed.Id3Tag.Artists.TextValue)
                 {

@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Id3;
 using NUnit.Framework;
 using NUnit.Framework.Internal;
+using Rhino.Mocks;
 
 namespace Sciendo.MusicBrainz.Match.Tests
 {
@@ -14,7 +16,85 @@ namespace Sciendo.MusicBrainz.Match.Tests
         [Test]
         public void RunnerNoFileSystem()
         {
-            Assert.Pass();            
+            Assert.That(() => new Runner(null, null, null,null,null), Throws.ArgumentNullException);
         }
+        [Test]
+        public void RunnerNoPath()
+        {
+            Assert.That(() => new Runner(new FileSystem(), null, null, null, null), Throws.ArgumentNullException);
+        }
+        [Test]
+        public void RunnerNoExtensions()
+        {
+            Assert.That(() => new Runner(new FileSystem(), "abc", null, null, null), Throws.ArgumentNullException);
+        }
+        [Test]
+        public void RunnerNoAnalyser()
+        {
+            Assert.That(() => new Runner(new FileSystem(), "abc", new [] {".mp3"}, null, null), Throws.ArgumentNullException);
+        }
+
+        [Test]
+        public void RunnerWrongPath()
+        {
+            var mockAnalyser = MockRepository.GenerateStub<IAnalyser>();
+            Assert.That(() => new Runner(new FileSystem(), "abc", new[] { ".mp3" }, mockAnalyser, "out.txt"), Throws.ArgumentException);
+        }
+
+        [Test]
+        public void RunnerOk()
+        {
+            var mockAnalyser = MockRepository.GenerateStub<IAnalyser>();
+            var runner = new Runner(new FileSystem(), "..", new[] { ".mp3" }, mockAnalyser, "out.txt");
+            Assert.IsNotNull(runner.FilesAnalysed);
+            Assert.IsEmpty(runner.FilesAnalysed);
+        }
+
+        [Test]
+        public void StartNothingUnderPath()
+        {
+            var mockAnalyser = MockRepository.GenerateStub<IAnalyser>();
+            var mockFileSystem = MockRepository.GenerateStub<IFileSystem>();
+            mockFileSystem.Expect(m => m.GetLeafDirectories("..")).Return(null);
+            mockFileSystem.Expect(m => m.GetFiles("..", new[] {".mp3"})).Return(null);
+            var runner = new Runner(mockFileSystem, "..", new[] { ".mp3" }, mockAnalyser);
+            runner.Start();
+            Assert.IsNotNull(runner.FilesAnalysed);
+            Assert.IsEmpty(runner.FilesAnalysed);
+        }
+        [Test]
+        public void StartOnlyFilesUnderPath()
+        {
+            var mockAnalyser = MockRepository.GenerateStub<IAnalyser>();
+            var mockFileSystem = MockRepository.GenerateStub<IFileSystem>();
+            mockFileSystem.Expect(m => m.GetLeafDirectories("..")).Return(null);
+            mockFileSystem.Expect(m => m.GetFiles("..", new[] { ".mp3" })).Return(new [] {"file1.mp3","file2.mp3"});
+            mockFileSystem.Expect(m => m.FileExists("file1.mp3")).Return(true);
+            mockFileSystem.Expect(m => m.FileExists("file2.mp3")).Return(true);
+            var mockMp3File = MockRepository.GenerateStub<IMp3Stream>();
+            mockAnalyser.Expect(m => m.AnalyseFile(mockMp3File, "file1.mp3")).Return(new FileAnalysed()).IgnoreArguments();
+            mockAnalyser.Expect(m => m.AnalyseFile(mockMp3File, "file2.mp3")).Return(new FileAnalysed()).IgnoreArguments();
+
+            var runner = new Runner(mockFileSystem, "..", new[] { ".mp3" }, mockAnalyser);
+            runner.Start();
+            Assert.IsNotNull(runner.FilesAnalysed);
+            Assert.IsNotEmpty(runner.FilesAnalysed);
+            Assert.AreEqual(2,runner.FilesAnalysed.Count);
+
+        }
+        [Test]
+        public void StartEmptyFoldersUnderPath()
+        {
+            var mockAnalyser = MockRepository.GenerateStub<IAnalyser>();
+            var mockFileSystem = MockRepository.GenerateStub<IFileSystem>();
+            mockFileSystem.Expect(m => m.GetLeafDirectories("..")).Return(new string[] {"f1","f2","f3"});
+            mockFileSystem.Expect(m => m.GetFiles("..", new[] { ".mp3" })).Return(null).IgnoreArguments();
+
+            var runner = new Runner(mockFileSystem, "..", new[] { ".mp3" }, mockAnalyser);
+            runner.Start();
+            Assert.IsNotNull(runner.FilesAnalysed);
+            Assert.IsEmpty(runner.FilesAnalysed);
+        }
+
     }
 }
