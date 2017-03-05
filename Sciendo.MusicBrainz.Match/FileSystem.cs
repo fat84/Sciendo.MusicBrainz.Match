@@ -26,7 +26,7 @@ namespace Sciendo.MusicBrainz.Match
                 {
                     if(ExtensionsRead!=null)
                         ExtensionsRead(this,new ExtensionsReadEventArgs(extension));
-                    foreach(var file in Directory.EnumerateFiles(path, "*.*", SearchOption.AllDirectories)
+                    foreach(var file in Directory.EnumerateFiles(path, "*.*", SearchOption.TopDirectoryOnly)
                         .Where(s => s.EndsWith(extension)))
                     {
                         yield return file;

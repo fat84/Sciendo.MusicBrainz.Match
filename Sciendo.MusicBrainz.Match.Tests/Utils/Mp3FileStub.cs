@@ -7,7 +7,7 @@ namespace Sciendo.MusicBrainz.Match.Tests.Utils
 {
     public class Mp3FileStub:IMp3Stream
     {
-        public Mp3FileStub(string file)
+        public Mp3FileStub(string file, Mp3Permissions mp3Permissions)
         {
             
         }

@@ -78,7 +78,7 @@ namespace Sciendo.MusicBrainz.Match
                         Serializer.SerializeToFile(_filesAnalysed,_outputFilePath);
                     break;
                 }
-                var newMp3File = _container.ResolveToNew<IMp3Stream>(_analyser.Mp3IocKey, file);
+                var newMp3File = _container.ResolveToNew<IMp3Stream>(_analyser.Mp3IocKey, file,Mp3Permissions.Read);
                 var fileAnalysed = _analyser.AnalyseFile(newMp3File, file);
                 if (!string.IsNullOrEmpty(previousArtist) && fileAnalysed.Id3TagComplete &&
                     previousArtist != fileAnalysed.Artist)
