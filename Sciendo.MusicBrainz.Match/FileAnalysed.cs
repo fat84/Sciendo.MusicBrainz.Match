@@ -25,10 +25,6 @@ namespace Sciendo.MusicBrainz.Match
 
         public bool InCollectionPath { get; set; }
 
-        public bool Id3TagComplete { get
-        {
-            return !string.IsNullOrEmpty(Album) || !string.IsNullOrEmpty(Artist) ||
-                   !string.IsNullOrEmpty(Title);
-        } }
+        public bool Id3TagIncomplete { get; set; }
     }
 }

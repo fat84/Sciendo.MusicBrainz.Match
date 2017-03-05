@@ -136,8 +136,42 @@ namespace Sciendo.MusicBrainz.Match.Tests
             Assert.AreEqual(fileAnalysed.FilePath,"myownfile.mp3");
             Assert.False(fileAnalysed.InCollectionPath);
             Assert.False(fileAnalysed.MarkedAsPartOfCollection);
-            Assert.True(fileAnalysed.Id3TagComplete);
+            Assert.False(fileAnalysed.Id3TagIncomplete);
             
+        }
+
+        [Test]
+        public void AnalyseFileTagIncomplete()
+        {
+            var collectionPaths = new string[] { "..", "abc" };
+            var FileSystemMock = MockRepository.GenerateStub<IFileSystem>();
+            FileSystemMock.Expect(m => m.DirectoriesExist(collectionPaths)).Return(true);
+            FileSystemMock.Expect(m => m.FileExists("myownfile.mp3")).Return(true);
+            var fileAnalyser = new FileAnalyser(collectionPaths, FileSystemMock, "some marker");
+
+            var mp3FileMock = MockRepository.GenerateStub<IMp3Stream>();
+
+
+            var mockTitleFrame = MockRepository.GenerateStub<TitleFrame>();
+            mockTitleFrame.TextValue = "my song";
+            var mockAlbumFrame = MockRepository.GenerateStub<AlbumFrame>();
+            mockAlbumFrame.TextValue = string.Empty;
+            var mockId3Tag = MockRepository.GenerateStub<IId3Tag>();
+            mockId3Tag.Stub(m => m.Artists).Return(null);
+            mockId3Tag.Stub(m => m.Title).Return(mockTitleFrame);
+            mockId3Tag.Stub(m => m.Album).Return(mockAlbumFrame);
+            mp3FileMock.Expect(m => m.HasTags).Return(true);
+            mp3FileMock.Expect(m => m.AvailableTagVersions).Return(new Version[] { new Version(3, 1) });
+            mp3FileMock.Expect(m => m.GetTag(3, 1)).Return(mockId3Tag);
+            var fileAnalysed = fileAnalyser.AnalyseFile(mp3FileMock, "myownfile.mp3");
+            Assert.True(string.IsNullOrEmpty(fileAnalysed.Album));
+            Assert.True(string.IsNullOrEmpty(fileAnalysed.Artist));
+            Assert.AreEqual(fileAnalysed.Title, "my song");
+            Assert.AreEqual(fileAnalysed.FilePath, "myownfile.mp3");
+            Assert.False(fileAnalysed.InCollectionPath);
+            Assert.False(fileAnalysed.MarkedAsPartOfCollection);
+            Assert.True(fileAnalysed.Id3TagIncomplete);
+
         }
 
         [Test]
@@ -171,7 +205,7 @@ namespace Sciendo.MusicBrainz.Match.Tests
             Assert.AreEqual(fileAnalysed.FilePath, @"..\myownfile.mp3");
             Assert.True(fileAnalysed.InCollectionPath);
             Assert.True(fileAnalysed.MarkedAsPartOfCollection);
-            Assert.True(fileAnalysed.Id3TagComplete);
+            Assert.False(fileAnalysed.Id3TagIncomplete);
 
         }
 
@@ -206,7 +240,7 @@ namespace Sciendo.MusicBrainz.Match.Tests
             Assert.AreEqual(fileAnalysed.FilePath, @"myownfile.mp3");
             Assert.False(fileAnalysed.InCollectionPath);
             Assert.True(fileAnalysed.MarkedAsPartOfCollection);
-            Assert.True(fileAnalysed.Id3TagComplete);
+            Assert.False(fileAnalysed.Id3TagIncomplete);
 
         }
 
@@ -241,7 +275,7 @@ namespace Sciendo.MusicBrainz.Match.Tests
             Assert.AreEqual(fileAnalysed.FilePath, @"..\myownfile.mp3");
             Assert.True(fileAnalysed.InCollectionPath);
             Assert.False(fileAnalysed.MarkedAsPartOfCollection);
-            Assert.True(fileAnalysed.Id3TagComplete);
+            Assert.False(fileAnalysed.Id3TagIncomplete);
 
         }
 
@@ -276,7 +310,7 @@ namespace Sciendo.MusicBrainz.Match.Tests
             Assert.AreEqual(fileAnalysed.FilePath, @"..\myownfile.mp3");
             Assert.True(fileAnalysed.InCollectionPath);
             Assert.False(fileAnalysed.MarkedAsPartOfCollection);
-            Assert.True(fileAnalysed.Id3TagComplete);
+            Assert.False(fileAnalysed.Id3TagIncomplete);
 
         }
 

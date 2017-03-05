@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Id3;
+using Id3.Id3;
 
 namespace Sciendo.MusicBrainz.Match
 {
@@ -40,10 +41,10 @@ namespace Sciendo.MusicBrainz.Match
             if(AnalyserProgress!=null)
                 AnalyserProgress(this,new AnalyserProgressEventArgs(filePath));
             if(!mp3File.HasTags)
-                return new FileAnalysed { Artist = null, Album=null,Title=null, FilePath = filePath };
+                return new FileAnalysed { Artist = null, Album=null,Title=null, FilePath = filePath, Id3TagIncomplete=true };
             var availableTagVersions = mp3File.AvailableTagVersions.OrderBy(v => v.Major).LastOrDefault();
             if (availableTagVersions == null)
-                return new FileAnalysed { Artist = null, Album = null, Title = null, FilePath = filePath};
+                return new FileAnalysed { Artist = null, Album = null, Title = null, FilePath = filePath,Id3TagIncomplete=true};
             var id3Tag = mp3File.GetTag(availableTagVersions.Major, availableTagVersions.Minor);
             bool isPartOfCollection = false;
             if (id3Tag == null || id3Tag.Band == null || id3Tag.Artists==null)
@@ -54,15 +55,37 @@ namespace Sciendo.MusicBrainz.Match
                                      id3Tag.Band.TextValue.ToLower() != id3Tag.Artists.TextValue.ToLower() &&
                                      id3Tag.Band == _collectionMarker;
             }
+            var tagComplete = ValidateTag(id3Tag);
             return new FileAnalysed
             {
-                Artist = id3Tag.Artists.TextValue,
-                Album=id3Tag.Album.TextValue,
-                Title=id3Tag.Title.TextValue,
+                Artist = (id3Tag==null || id3Tag.Artists==null )?null: id3Tag.Artists.TextValue,
+                Album=(id3Tag==null || id3Tag.Album==null) ?null :id3Tag.Album.TextValue,
+                Title=(id3Tag==null || id3Tag.Title==null)?null:id3Tag.Title.TextValue,
                 FilePath = filePath,
                 InCollectionPath = _collectionPaths.Any(c => filePath.ToLower().Contains(c.ToLower())),
-                MarkedAsPartOfCollection=isPartOfCollection
+                MarkedAsPartOfCollection=isPartOfCollection,
+                Id3TagIncomplete=!tagComplete
+                
             };
+        }
+
+        private bool ValidateTag(IId3Tag id3Tag)
+        {
+            if (id3Tag == null)
+                return false;
+            if (id3Tag.Artists == null)
+                return false;
+            if (string.IsNullOrEmpty(id3Tag.Artists.TextValue))
+                return false;
+            if (id3Tag.Album == null)
+                return false;
+            if (string.IsNullOrEmpty(id3Tag.Album.TextValue))
+                return false;
+            if (id3Tag.Title == null)
+                return false;
+            if (string.IsNullOrEmpty(id3Tag.Title.TextValue))
+                return false;
+            return true;
         }
 
         public string[] CollectionPaths {
