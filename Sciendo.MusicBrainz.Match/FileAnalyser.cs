@@ -45,7 +45,12 @@ namespace Sciendo.MusicBrainz.Match
             var availableTagVersions = mp3File.AvailableTagVersions.OrderBy(v => v.Major).LastOrDefault();
             if (availableTagVersions == null)
                 return new FileAnalysed { Artist = null, Album = null, Title = null, FilePath = filePath,Id3TagIncomplete=true};
-            var id3Tag = mp3File.GetTag(availableTagVersions.Major, availableTagVersions.Minor);
+            IId3Tag id3Tag = null;
+            try
+            {
+                id3Tag = mp3File.GetTag(availableTagVersions.Major, availableTagVersions.Minor);
+            }
+            catch{}
             bool isPartOfCollection = false;
             if (id3Tag == null || id3Tag.Band == null || id3Tag.Artists==null)
                 isPartOfCollection = false;
