@@ -2,10 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading;
 
-namespace Sciendo.MusicBrainz.Match
+namespace Sciendo.FilesAnalyser
 {
     public class FileSystem:IFileSystem
     {

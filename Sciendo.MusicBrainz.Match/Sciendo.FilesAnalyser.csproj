@@ -7,8 +7,8 @@
     <ProjectGuid>{EDD4C1E1-C747-4CC1-B992-F1D3F22DA43F}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Sciendo.MusicBrainz.Match</RootNamespace>
-    <AssemblyName>Sciendo.MusicBrainz.Match</AssemblyName>
+    <RootNamespace>Sciendo.FilesAnalyser</RootNamespace>
+    <AssemblyName>Sciendo.FilesAnalyser</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>

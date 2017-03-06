@@ -1,6 +1,6 @@
 ﻿using System.Configuration;
 
-namespace Sciendo.MusicBrainz.Match.Configuration
+namespace Sciendo.FilesAnalyser.Configuration
 {
     public class AnalyserConfigurationSection : ConfigurationSection
     {

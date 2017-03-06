@@ -7,6 +7,7 @@ using Id3;
 using NUnit.Framework;
 using NUnit.Framework.Internal;
 using Rhino.Mocks;
+using Sciendo.FilesAnalyser;
 using Sciendo.IOC;
 using Sciendo.MusicBrainz.Match.Tests.Utils;
 

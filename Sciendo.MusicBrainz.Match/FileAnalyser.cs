@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using Id3;
 using Id3.Id3;
 
-namespace Sciendo.MusicBrainz.Match
+namespace Sciendo.FilesAnalyser
 {
     public class FileAnalyser:IAnalyser
     {

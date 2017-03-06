@@ -2,13 +2,11 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Id3;
 using Sciendo.Common.Serialization;
 using Sciendo.IOC;
 
-namespace Sciendo.MusicBrainz.Match
+namespace Sciendo.FilesAnalyser
 {
     public class Runner:IRunner
     {

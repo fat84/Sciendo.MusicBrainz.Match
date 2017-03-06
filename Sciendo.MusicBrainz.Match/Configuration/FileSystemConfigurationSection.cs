@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Configuration;
 
-namespace Sciendo.MusicBrainz.Match.Configuration
+namespace Sciendo.FilesAnalyser.Configuration
 {
     public class FileSystemConfigurationSection : ConfigurationSection
     {

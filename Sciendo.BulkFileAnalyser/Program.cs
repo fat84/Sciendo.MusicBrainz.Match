@@ -6,9 +6,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Id3;
+using Sciendo.FilesAnalyser;
+using Sciendo.FilesAnalyser.Configuration;
 using Sciendo.IOC;
-using Sciendo.MusicBrainz.Match;
-using Sciendo.MusicBrainz.Match.Configuration;
 
 namespace Sciendo.BulkFileAnalyser
 {

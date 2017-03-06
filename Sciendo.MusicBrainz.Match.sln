@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sciendo.MusicBrainz.Match", "Sciendo.MusicBrainz.Match\Sciendo.MusicBrainz.Match.csproj", "{EDD4C1E1-C747-4CC1-B992-F1D3F22DA43F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sciendo.FilesAnalyser", "Sciendo.MusicBrainz.Match\Sciendo.FilesAnalyser.csproj", "{EDD4C1E1-C747-4CC1-B992-F1D3F22DA43F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sciendo.MusicBrainz.Match.Tests", "Sciendo.MusicBrainz.Match.Tests\Sciendo.MusicBrainz.Match.Tests.csproj", "{5F5FFE49-3EDB-45D3-902F-1A64AB3FEDAA}"
 EndProject

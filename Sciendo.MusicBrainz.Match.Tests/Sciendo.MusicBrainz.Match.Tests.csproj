@@ -70,9 +70,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Sciendo.MusicBrainz.Match\Sciendo.MusicBrainz.Match.csproj">
+    <ProjectReference Include="..\Sciendo.MusicBrainz.Match\Sciendo.FilesAnalyser.csproj">
       <Project>{EDD4C1E1-C747-4CC1-B992-F1D3F22DA43F}</Project>
-      <Name>Sciendo.MusicBrainz.Match</Name>
+      <Name>Sciendo.FilesAnalyser</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

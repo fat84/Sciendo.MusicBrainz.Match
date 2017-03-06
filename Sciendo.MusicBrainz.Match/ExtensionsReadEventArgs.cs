@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Sciendo.MusicBrainz.Match
+namespace Sciendo.FilesAnalyser
 {
     public class ExtensionsReadEventArgs:EventArgs
     {

@@ -4,6 +4,7 @@ using Id3.Frames;
 using Id3.Id3;
 using NUnit.Framework;
 using Rhino.Mocks;
+using Sciendo.FilesAnalyser;
 
 namespace Sciendo.MusicBrainz.Match.Tests
 {
