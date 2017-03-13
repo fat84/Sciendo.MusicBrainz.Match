@@ -65,6 +65,7 @@ namespace Sciendo.FilesAnalyser
                 Artist = (id3Tag==null || id3Tag.Artists==null )?null: id3Tag.Artists.TextValue,
                 Album=(id3Tag==null || id3Tag.Album==null) ?null :id3Tag.Album.TextValue,
                 Title=(id3Tag==null || id3Tag.Title==null)?null:id3Tag.Title.TextValue,
+                Track=(id3Tag==null || id3Tag.Track==null)?null:id3Tag.Track.TextValue,
                 FilePath = filePath,
                 InCollectionPath = _collectionPaths.Any(c => filePath.ToLower().Contains(c.ToLower())),
                 MarkedAsPartOfCollection=isPartOfCollection,

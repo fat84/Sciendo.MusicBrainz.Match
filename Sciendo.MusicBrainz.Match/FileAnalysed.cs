@@ -9,6 +9,8 @@
 
         public string Album { get; set; }
 
+        public string Track { get; set; }
+
         public string Title { get; set; }
 
         public bool MarkedAsPartOfCollection { get; set; }
