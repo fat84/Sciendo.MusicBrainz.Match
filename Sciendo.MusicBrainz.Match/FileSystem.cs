@@ -69,7 +69,17 @@ namespace Sciendo.FilesAnalyser
         {
             using (FileStream fs = File.OpenRead(filePath))
             {
-                return TagLib.File.Create(new StreamFileAbstraction(filePath, fs, fs)).GetTag(TagTypes.AllTags);
+                var fsa=new StreamFileAbstraction(filePath, fs, fs);
+                try
+                {
+                    TagLib.File file = TagLib.File.Create(fsa);
+                    return file.Tag;
+                }
+                catch (CorruptFileException cex)
+                {
+                    Console.WriteLine(cex);
+                    return null;
+                }
             }
         }
     }

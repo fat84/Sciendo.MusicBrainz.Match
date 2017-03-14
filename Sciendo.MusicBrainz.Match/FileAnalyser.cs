@@ -38,10 +38,10 @@ namespace Sciendo.FilesAnalyser
                 AnalyserProgress(this,new AnalyserProgressEventArgs(filePath));
 
             var tag = _fileSystem.ReadTagFromFile(filePath);
-            if (tag.IsEmpty)
+            if (tag==null || tag.IsEmpty)
                 return new FileAnalysed { Artist = null, Album=null,Title=null, FilePath = filePath, Id3TagIncomplete=true };
             bool isPartOfCollection = false;
-            if (tag == null || tag.AlbumArtists == null || tag.Artists==null || !tag.AlbumArtists.Any() || !tag.Artists.Any())
+            if (tag.AlbumArtists == null || tag.Artists==null || !tag.AlbumArtists.Any() || !tag.Artists.Any())
                 isPartOfCollection = false;
             else
             {
