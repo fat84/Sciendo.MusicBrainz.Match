@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 using Neo4jClient;
 using Neo4jClient.Cypher;
 using Sciendo.FilesAnalyser;
@@ -19,12 +20,25 @@ namespace Sciendo.MusicBrainz
         }
         public void LinkToExisting(IEnumerable<FileAnalysed> filesAnalysed)
         {
+            if(filesAnalysed==null)
+                throw new ArgumentNullException(nameof(filesAnalysed));
 
             foreach (var fileAnalysed in filesAnalysed)
             {
-                if (!LinkOneToExisting(fileAnalysed))
-                    CreateANewOne(fileAnalysed);
+                var sanitizedFileAnalysed = Sanitize(fileAnalysed);
+                if (!LinkOneToExisting(sanitizedFileAnalysed))
+                    CreateANewOne(sanitizedFileAnalysed);
             }
+        }
+
+        private FileAnalysed Sanitize(FileAnalysed fileAnalysed)
+        {
+            fileAnalysed.Title = HttpUtility.HtmlDecode(fileAnalysed.Title).ToLower().Replace(@"\","/");
+            fileAnalysed.Album = HttpUtility.HtmlDecode(fileAnalysed.Album).ToLower().Replace(@"\", "/");
+            fileAnalysed.Artist = HttpUtility.HtmlDecode(fileAnalysed.Artist).ToLower().Replace(@"\", "/");
+            fileAnalysed.FilePath = HttpUtility.HtmlDecode(fileAnalysed.FilePath).ToLower().Replace(@"\", "/");
+
+            return fileAnalysed;
         }
 
         private void CreateANewOne(FileAnalysed fileAnalysed)
@@ -55,7 +69,7 @@ namespace Sciendo.MusicBrainz
             //add the localTrack
             //-[lp: HAVE_LOCAL] - (l:localTrack{ name: "mypath/mypath/myfile1.mp3"}) return h,p,t, lp, l
             _graphClient.Cypher.Match("(t:Track{name:'"+fileAnalysed.Title+"'})")
-                .Merge("(t)-[lp: HAVE_LOCAL]-(l:localTrack{ name: '" + fileAnalysed.FilePath.Replace(@"\", "/") + "'})")
+                .Merge("(t)-[lp: HAVE_LOCAL]-(l:localTrack{ name: '" + fileAnalysed.FilePath + "'})")
                 .ExecuteWithoutResults();
             
         }
@@ -105,7 +119,7 @@ namespace Sciendo.MusicBrainz
                 .Match("(m)<-[:APPEARS_ON]-(t:Track)")
                 .Where("t.name=~{trackName}")
                 .WithParam("trackName", "(?ui).*" + fileAnalysed.Title + ".*")
-                .Merge("(t)-[lr: HAVE_LOCAL]-(l:localTrack {name:'" + fileAnalysed.FilePath.Replace(@"\", @"/") + "'})")
+                .Merge("(t)-[lr: HAVE_LOCAL]-(l:localTrack {name:'" + fileAnalysed.FilePath + "'})")
                 .Return(l => l.As<LocalTrack>())
                 .Results.Count();
 
