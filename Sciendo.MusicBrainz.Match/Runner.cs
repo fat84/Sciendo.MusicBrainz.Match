@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Id3;
 using Sciendo.Common.Serialization;
 using Sciendo.IOC;
 
@@ -18,7 +17,6 @@ namespace Sciendo.FilesAnalyser
         private List<FileAnalysed> _filesAnalysed;
         private bool _fileSystemStopped=false;
         private bool _analyserStopped = false;
-        private Container _container;
 
         public Runner(IFileSystem fileSystem, string path, string[] extensions, IAnalyser analyser, string outputFilePath="")
         {
@@ -38,7 +36,6 @@ namespace Sciendo.FilesAnalyser
             _analyser = analyser;
             _outputFilePath = outputFilePath;
             _filesAnalysed=new List<FileAnalysed>();
-            _container = Container.GetInstance();
         }
         public virtual void Initialize()
         {
@@ -76,8 +73,7 @@ namespace Sciendo.FilesAnalyser
                         Serializer.SerializeToFile(_filesAnalysed,_outputFilePath);
                     break;
                 }
-                var newMp3File = _container.ResolveToNew<IMp3Stream>(_analyser.Mp3IocKey, file,Mp3Permissions.Read);
-                var fileAnalysed = _analyser.AnalyseFile(newMp3File, file);
+                var fileAnalysed = _analyser.AnalyseFile(file);
                 if (!string.IsNullOrEmpty(previousArtist) && fileAnalysed.Id3TagIncomplete &&
                     previousArtist != fileAnalysed.Artist)
                 {

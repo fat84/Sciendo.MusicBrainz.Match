@@ -9,7 +9,7 @@
 
         public string Album { get; set; }
 
-        public string Track { get; set; }
+        public uint Track { get; set; }
 
         public string Title { get; set; }
 

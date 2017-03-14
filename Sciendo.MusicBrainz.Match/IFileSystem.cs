@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using TagLib;
 
 namespace Sciendo.FilesAnalyser
 {
@@ -12,6 +13,8 @@ namespace Sciendo.FilesAnalyser
         bool FileExists(string path);
 
         bool StopActivity { get; set; }
+
+        Tag ReadTagFromFile(string filePath);
 
         event EventHandler<ExtensionsReadEventArgs> ExtensionsRead;
 

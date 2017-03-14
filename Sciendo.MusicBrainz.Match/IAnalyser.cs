@@ -1,11 +1,12 @@
 ﻿using System;
-using Id3;
+using System.IO;
+using TagLib;
 
 namespace Sciendo.FilesAnalyser
 {
     public interface IAnalyser
     {
-        FileAnalysed AnalyseFile(IMp3Stream mp3File,string filePath);
+        FileAnalysed AnalyseFile(string filePath);
         
         string[] CollectionPaths { get; }
 
@@ -14,7 +15,5 @@ namespace Sciendo.FilesAnalyser
         bool StopActivity { get; set; }
 
         event EventHandler<AnalyserProgressEventArgs> AnalyserProgress;
-
-        string Mp3IocKey { get; }
     }
 }

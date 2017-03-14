@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Id3;
 using Sciendo.FilesAnalyser;
 using Sciendo.FilesAnalyser.Configuration;
 using Sciendo.IOC;
@@ -28,7 +25,6 @@ namespace Sciendo.BulkFileAnalyser
            
 
             var analyser = new FileAnalyser(collectionPaths, fileSystem, collectionMarker);
-            Container.GetInstance().Add(new RegisteredType().For<Mp3File>().BasedOn<IMp3Stream>().With(LifeStyle.Transient).IdentifiedBy(analyser.Mp3IocKey));
 
             fileSystem.ExtensionsRead += FileSystem_ExtensionsRead;
             fileSystem.DirectoryRead += FileSystem_DirectoryRead;

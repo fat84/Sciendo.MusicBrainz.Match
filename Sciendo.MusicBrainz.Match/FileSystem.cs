@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using TagLib;
+using File = System.IO.File;
 
 namespace Sciendo.FilesAnalyser
 {
@@ -63,5 +65,12 @@ namespace Sciendo.FilesAnalyser
         }
 
         public event EventHandler<DirectoryReadEventArgs> DirectoryRead;
+        public Tag ReadTagFromFile(string filePath)
+        {
+            using (FileStream fs = File.OpenRead(filePath))
+            {
+                return TagLib.File.Create(new StreamFileAbstraction(filePath, fs, fs)).GetTag(TagTypes.AllTags);
+            }
+        }
     }
 }

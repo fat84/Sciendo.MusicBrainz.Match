@@ -1,7 +1,7 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
-using Id3;
-using Id3.Id3;
+using TagLib;
 
 namespace Sciendo.FilesAnalyser
 {
@@ -28,44 +28,34 @@ namespace Sciendo.FilesAnalyser
             StopActivity = false;
         }
 
-        public FileAnalysed AnalyseFile(IMp3Stream mp3File, string filePath)
+        public FileAnalysed AnalyseFile(string filePath)
         {
-            if (mp3File == null)
-                throw new ArgumentNullException(nameof(mp3File));
-
             if (string.IsNullOrEmpty(filePath))
                 throw new ArgumentNullException(nameof(filePath));
             if(!_fileSystem.FileExists(filePath))
                 throw new ArgumentException("File does not exist.",nameof(filePath));
             if(AnalyserProgress!=null)
                 AnalyserProgress(this,new AnalyserProgressEventArgs(filePath));
-            if(!mp3File.HasTags)
+
+            var tag = _fileSystem.ReadTagFromFile(filePath);
+            if (tag.IsEmpty)
                 return new FileAnalysed { Artist = null, Album=null,Title=null, FilePath = filePath, Id3TagIncomplete=true };
-            var availableTagVersions = mp3File.AvailableTagVersions.OrderBy(v => v.Major).LastOrDefault();
-            if (availableTagVersions == null)
-                return new FileAnalysed { Artist = null, Album = null, Title = null, FilePath = filePath,Id3TagIncomplete=true};
-            IId3Tag id3Tag = null;
-            try
-            {
-                id3Tag = mp3File.GetTag(availableTagVersions.Major, availableTagVersions.Minor);
-            }
-            catch{}
             bool isPartOfCollection = false;
-            if (id3Tag == null || id3Tag.Band == null || id3Tag.Artists==null)
+            if (tag == null || tag.AlbumArtists == null || tag.Artists==null || !tag.AlbumArtists.Any() || !tag.Artists.Any())
                 isPartOfCollection = false;
             else
             {
-                isPartOfCollection = !string.IsNullOrEmpty(id3Tag.Band.TextValue) &&
-                                     id3Tag.Band.TextValue.ToLower() != id3Tag.Artists.TextValue.ToLower() &&
-                                     id3Tag.Band == _collectionMarker;
+                isPartOfCollection = !string.IsNullOrEmpty(tag.AlbumArtists.FirstOrDefault()) &&
+                                     tag.AlbumArtists.FirstOrDefault().ToLower() != tag.Artists.FirstOrDefault().ToLower() &&
+                                     tag.AlbumArtists.FirstOrDefault() == _collectionMarker;
             }
-            var tagComplete = ValidateTag(id3Tag);
+            var tagComplete = ValidateTag(tag);
             return new FileAnalysed
             {
-                Artist = (id3Tag==null || id3Tag.Artists==null )?null: id3Tag.Artists.TextValue,
-                Album=(id3Tag==null || id3Tag.Album==null) ?null :id3Tag.Album.TextValue,
-                Title=(id3Tag==null || id3Tag.Title==null)?null:id3Tag.Title.TextValue,
-                Track=(id3Tag==null || id3Tag.Track==null)?null:id3Tag.Track.TextValue,
+                Artist = (tag.Artists==null )?null: tag.Artists.FirstOrDefault(),
+                Album=(tag.Album==null) ?null :tag.Album,
+                Title=(tag.Title==null)?null:tag.Title,
+                Track=tag.Track,
                 FilePath = filePath,
                 InCollectionPath = _collectionPaths.Any(c => filePath.ToLower().Contains(c.ToLower())),
                 MarkedAsPartOfCollection=isPartOfCollection,
@@ -74,21 +64,21 @@ namespace Sciendo.FilesAnalyser
             };
         }
 
-        private bool ValidateTag(IId3Tag id3Tag)
+        private bool ValidateTag(Tag tag)
         {
-            if (id3Tag == null)
+            if (tag == null)
                 return false;
-            if (id3Tag.Artists == null)
+            if (tag.Artists == null)
                 return false;
-            if (string.IsNullOrEmpty(id3Tag.Artists.TextValue))
+            if (string.IsNullOrEmpty(tag.Artists.FirstOrDefault()))
                 return false;
-            if (id3Tag.Album == null)
+            if (tag.Album == null)
                 return false;
-            if (string.IsNullOrEmpty(id3Tag.Album.TextValue))
+            if (string.IsNullOrEmpty(tag.Album))
                 return false;
-            if (id3Tag.Title == null)
+            if (tag.Title == null)
                 return false;
-            if (string.IsNullOrEmpty(id3Tag.Title.TextValue))
+            if (string.IsNullOrEmpty(tag.Title))
                 return false;
             return true;
         }
@@ -104,6 +94,5 @@ namespace Sciendo.FilesAnalyser
 
         public bool StopActivity { get; set; }
         public event EventHandler<AnalyserProgressEventArgs> AnalyserProgress;
-        public string Mp3IocKey { get { return "MP3IOCKEY"; } }
     }
 }

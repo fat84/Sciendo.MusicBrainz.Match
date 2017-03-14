@@ -33,14 +33,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Id3, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Id3.1.0.0-Build00001\lib\portable-net40+sl40+win+wp80\Id3.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Id3.Files, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Id3.Files.1.0.0-Build00001\lib\net451\Id3.Files.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="Sciendo.IOC, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Sciendo.IOC.1.0.0-Build00017\lib\portable40-net40+sl5+win8+wp8\Sciendo.IOC.dll</HintPath>
       <Private>True</Private>
@@ -54,6 +46,10 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
+    <Reference Include="TagLib.Portable, Version=2.2.0.0, Culture=neutral, PublicKeyToken=db62eba44689b5b0, processorArchitecture=MSIL">
+      <HintPath>..\packages\TagLib.Portable.1.0.4\lib\portable-net45+win+wpa81+wp8+MonoAndroid10+xamarinios10+MonoTouch10\TagLib.Portable.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />

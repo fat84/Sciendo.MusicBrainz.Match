@@ -1,15 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Id3;
-using NUnit.Framework;
-using NUnit.Framework.Internal;
+﻿using NUnit.Framework;
 using Rhino.Mocks;
 using Sciendo.FilesAnalyser;
 using Sciendo.IOC;
-using Sciendo.MusicBrainz.Match.Tests.Utils;
+using TagLib.Id3v2;
 
 namespace Sciendo.MusicBrainz.Match.Tests
 {
@@ -74,10 +67,11 @@ namespace Sciendo.MusicBrainz.Match.Tests
             mockFileSystem.Expect(m => m.GetFiles("..", new[] { ".mp3" })).Return(new [] {"file1.mp3","file2.mp3"});
             mockFileSystem.Expect(m => m.FileExists("file1.mp3")).Return(true);
             mockFileSystem.Expect(m => m.FileExists("file2.mp3")).Return(true);
-            mockAnalyser.Expect(m => m.Mp3IocKey).Return("Mp3IocKey");
-            Container.GetInstance().Add(new RegisteredType().For<Mp3FileStub>().BasedOn<IMp3Stream>().With(LifeStyle.Transient).IdentifiedBy(mockAnalyser.Mp3IocKey));
-            mockAnalyser.Expect(m => m.AnalyseFile(null, "file1.mp3")).Return(new FileAnalysed()).IgnoreArguments();
-            mockAnalyser.Expect(m => m.AnalyseFile(null, "file2.mp3")).Return(new FileAnalysed()).IgnoreArguments();
+            mockFileSystem.Expect(m => m.ReadTagFromFile("file1.mp3")).Return(new Tag());
+            mockFileSystem.Expect(m => m.ReadTagFromFile("file2.mp3")).Return(new Tag());
+
+            mockAnalyser.Expect(m => m.AnalyseFile("file1.mp3")).Return(new FileAnalysed()).IgnoreArguments();
+            mockAnalyser.Expect(m => m.AnalyseFile("file2.mp3")).Return(new FileAnalysed()).IgnoreArguments();
             var runner = new Runner(mockFileSystem, "..", new[] { ".mp3" }, mockAnalyser);
             runner.Start();
             Assert.IsNotNull(runner.FilesAnalysed);
