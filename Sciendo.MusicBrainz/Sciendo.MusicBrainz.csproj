@@ -30,6 +30,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="log4net, Version=1.2.13.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
+      <HintPath>..\packages\log4net.2.0.3\lib\net40-full\log4net.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Neo4jClient, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Neo4jClient.2.0.0.7\lib\net45\Neo4jClient.dll</HintPath>
       <Private>True</Private>
@@ -38,7 +42,12 @@
       <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Sciendo.Common, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Sciendo.Common.1.0.0-Build00017\lib\net40\Sciendo.Common.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Web" />
     <Reference Include="System.Xml.Linq" />
@@ -53,6 +62,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CheckProgressEventArgs.cs" />
+    <Compile Include="Configuration\MusicBrainzConfigSection.cs" />
     <Compile Include="MusicBrainzAdapter.cs" />
     <Compile Include="IMusicBrainzAdapter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -61,6 +72,10 @@
     <ProjectReference Include="..\Sciendo.MusicBrainz.Match\Sciendo.FilesAnalyser.csproj">
       <Project>{EDD4C1E1-C747-4CC1-B992-F1D3F22DA43F}</Project>
       <Name>Sciendo.FilesAnalyser</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Sciendo.MusicMatch.Contracts\Sciendo.MusicMatch.Contracts.csproj">
+      <Project>{1FBF4007-6BAD-4F83-A976-DB2AFF3564AA}</Project>
+      <Name>Sciendo.MusicMatch.Contracts</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

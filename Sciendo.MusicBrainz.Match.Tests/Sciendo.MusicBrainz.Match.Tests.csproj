@@ -82,6 +82,10 @@
       <Project>{8EDB2E5F-B317-4F57-9B74-F3D7EF462BCD}</Project>
       <Name>Sciendo.MusicBrainz</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Sciendo.MusicMatch.Contracts\Sciendo.MusicMatch.Contracts.csproj">
+      <Project>{1fbf4007-6bad-4f83-a976-db2aff3564aa}</Project>
+      <Name>Sciendo.MusicMatch.Contracts</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

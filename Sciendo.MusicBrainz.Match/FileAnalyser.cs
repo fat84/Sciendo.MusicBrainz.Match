@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using Sciendo.MusicMatch.Contracts;
 using TagLib;
 
 namespace Sciendo.FilesAnalyser
@@ -52,9 +53,9 @@ namespace Sciendo.FilesAnalyser
             var tagComplete = ValidateTag(tag);
             return new FileAnalysed
             {
-                Artist = (tag.Artists==null )?null: tag.Artists.FirstOrDefault(),
-                Album=(tag.Album==null) ?null :tag.Album,
-                Title=(tag.Title==null)?null:tag.Title,
+                Artist = (tag.Artists==null )?null: tag.Artists.FirstOrDefault().CleanString(),
+                Album=(tag.Album==null) ?null :tag.Album.CleanString(),
+                Title=(tag.Title==null)?null:tag.Title.CleanString(),
                 Track=tag.Track,
                 FilePath = filePath,
                 InCollectionPath = _collectionPaths.Any(c => filePath.ToLower().Contains(c.ToLower())),

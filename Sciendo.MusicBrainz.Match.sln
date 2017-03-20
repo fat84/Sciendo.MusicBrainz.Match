@@ -11,6 +11,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sciendo.BulkFileAnalyser", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sciendo.MusicBrainz", "Sciendo.MusicBrainz\Sciendo.MusicBrainz.csproj", "{8EDB2E5F-B317-4F57-9B74-F3D7EF462BCD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sciendo.MusicMatch.Contracts", "Sciendo.MusicMatch.Contracts\Sciendo.MusicMatch.Contracts.csproj", "{1FBF4007-6BAD-4F83-A976-DB2AFF3564AA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sciendo.BulkMusicMatcher", "Sciendo.BulkMusicMatcher\Sciendo.BulkMusicMatcher.csproj", "{256F6B1F-EB07-4E41-A11E-4FB63B9F5E84}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +37,14 @@ Global
 		{8EDB2E5F-B317-4F57-9B74-F3D7EF462BCD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8EDB2E5F-B317-4F57-9B74-F3D7EF462BCD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8EDB2E5F-B317-4F57-9B74-F3D7EF462BCD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1FBF4007-6BAD-4F83-A976-DB2AFF3564AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1FBF4007-6BAD-4F83-A976-DB2AFF3564AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1FBF4007-6BAD-4F83-A976-DB2AFF3564AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1FBF4007-6BAD-4F83-A976-DB2AFF3564AA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{256F6B1F-EB07-4E41-A11E-4FB63B9F5E84}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{256F6B1F-EB07-4E41-A11E-4FB63B9F5E84}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{256F6B1F-EB07-4E41-A11E-4FB63B9F5E84}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{256F6B1F-EB07-4E41-A11E-4FB63B9F5E84}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

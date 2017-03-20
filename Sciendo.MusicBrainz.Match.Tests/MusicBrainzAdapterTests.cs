@@ -7,11 +7,12 @@ using Neo4jClient;
 using NUnit.Framework;
 using NUnit.Framework.Internal;
 using Sciendo.FilesAnalyser;
+using Sciendo.MusicMatch.Contracts;
 
 namespace Sciendo.MusicBrainz.Match.Tests
 {
     [TestFixture]
-    [Ignore("Integration tests")]
+//    [Ignore("Integration tests")]
     public class MusicBrainzAdapterTests
     {
         private GraphClient _client;

@@ -2,6 +2,7 @@
 using Rhino.Mocks;
 using Sciendo.FilesAnalyser;
 using Sciendo.IOC;
+using Sciendo.MusicMatch.Contracts;
 using TagLib.Id3v2;
 
 namespace Sciendo.MusicBrainz.Match.Tests

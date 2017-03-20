@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Sciendo.MusicMatch.Contracts;
 using TagLib;
 
 namespace Sciendo.FilesAnalyser

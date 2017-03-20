@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Web;
 using Neo4jClient;
-using Neo4jClient.Cypher;
+using Sciendo.Common.Serialization;
 using Sciendo.FilesAnalyser;
+using Sciendo.MusicMatch.Contracts;
 
 namespace Sciendo.MusicBrainz
 {
@@ -121,10 +120,10 @@ namespace Sciendo.MusicBrainz
                 .WithParam("trackName", "(?ui).*" + fileAnalysed.Title + ".*")
                 .Merge("(t)-[lr: HAVE_LOCAL]-(l:localTrack {name:'" + fileAnalysed.FilePath + "'})")
                 .Return(l => l.As<LocalTrack>())
-                .Results.Count();
+                .Query;
 
-            return (results > 0);
-
+            //return (results > 0);
+            return true;
         }
 
         private void LinkToExistinginCollection(FileAnalysed fileAnalysed)
@@ -135,6 +134,69 @@ namespace Sciendo.MusicBrainz
         public void CreateNew(IEnumerable<FileAnalysed> fileAnalysed)
         {
             throw new NotImplementedException();
+        }
+
+        //MATCH (ac:ArtistCredit)-[:CREDITED_ON]->(a:Album)-[:PART_OF]-(b)-[:RELEASED_ON_MEDIUM]-(m:Cd)-[:APPEARS_ON]-(t:Track)
+        //WHERE a.name=~"(?ui).*True Blue.*"
+        //and t.name=~"(?ui).*Open Your Heart.*"
+        //and ac.name=~"(?ui).*Madonna.*"//
+        //Return t.mbid
+        //limit 1
+        public FileAnalysed Check(FileAnalysed fileAnalysed)
+        {
+            var query = _graphClient.Cypher.Match(
+                    "(ac:ArtistCredit)-[:CREDITED_ON]->(a:Album)-[:PART_OF]-(b)-[:RELEASED_ON_MEDIUM]-(m:Cd)-[:APPEARS_ON]-(t:Track)")
+                .Where("a.name=~{albumName}")
+                .WithParam("albumName", "(?ui).*" + fileAnalysed.Album + ".*")
+                .AndWhere("t.name=~{title}")
+                .WithParam("title", "(?ui).*" + fileAnalysed.Title + ".*")
+                .AndWhere("ac.name=~{artistName}")
+                .WithParam("artistName", "(?ui).*" + fileAnalysed.Artist + ".*")
+                .Return(t => t.As<MBEntry>()).Query;
+            fileAnalysed.Neo4JMatchingQuery = query.DebugQueryText;
+            if (fileAnalysed.Id3TagIncomplete)
+            {
+                CheckProgress?.Invoke(this, new CheckProgressEventArgs(fileAnalysed.FilePath,false));
+                return fileAnalysed;
+            }
+            var result =
+                _graphClient.Cypher.Match(
+                        "(ac:ArtistCredit)-[:CREDITED_ON]->(a:Album)-[:PART_OF]-(b)-[:RELEASED_ON_MEDIUM]-(m:Cd)-[:APPEARS_ON]-(t:Track)")
+                    .Where("a.name=~{albumName}")
+                    .WithParam("albumName", "(?ui).*" + fileAnalysed.Album + ".*")
+                    .AndWhere("t.name=~{title}")
+                    .WithParam("title", "(?ui).*" + fileAnalysed.Title + ".*")
+                    .AndWhere("ac.name=~{artistName}")
+                    .WithParam("artistName", "(?ui).*" + fileAnalysed.Artist + ".*")
+                    .Return(t => t.As<MBEntry>()).Results.FirstOrDefault();
+            fileAnalysed.MbId=(result==null)?Guid.Empty:new Guid(result.mbid);
+            CheckProgress?.Invoke(this,
+                result == null
+                    ? new CheckProgressEventArgs(fileAnalysed.FilePath, false)
+                    : new CheckProgressEventArgs(fileAnalysed.FilePath, true));
+            return fileAnalysed;
+        }
+
+        public void CheckBulk(string file, string outputFile)
+        {
+            var filesAnalysed = Serializer.DeserializeFromFile<FileAnalysed>(file);
+            var result = CheckBulk(filesAnalysed).ToList();
+            Serializer.SerializeToFile(result,string.IsNullOrEmpty(outputFile)?file:outputFile);
+        }
+
+        public IEnumerable<FileAnalysed> CheckBulk(IEnumerable<FileAnalysed> filesAnalysed)
+        {
+            return filesAnalysed.AsParallel().Select(f=>Check(f));
+        }
+
+        public event EventHandler<CheckProgressEventArgs> CheckProgress;
+        public void CheckBulkAndSplit(string file, string matchedoutputFile, string unMatchedOutputFile)
+        {
+            var filesAnalysed = Serializer.DeserializeFromFile<FileAnalysed>(file);
+            var result = CheckBulk(filesAnalysed);
+            
+            Serializer.SerializeToFile(result.Where(f=>f.MbId!=Guid.Empty).ToList(), matchedoutputFile);
+            Serializer.SerializeToFile(result.Where(f => f.MbId == Guid.Empty).ToList(), unMatchedOutputFile);
         }
     }
 

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Sciendo.MusicMatch.Contracts;
 
 namespace Sciendo.FilesAnalyser
 {

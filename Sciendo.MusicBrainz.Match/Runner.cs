@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using Sciendo.Common.Serialization;
 using Sciendo.IOC;
+using Sciendo.MusicMatch.Contracts;
 
 namespace Sciendo.FilesAnalyser
 {
