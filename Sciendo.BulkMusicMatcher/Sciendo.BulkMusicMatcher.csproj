@@ -33,6 +33,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="CommandLine, Version=1.9.71.2, Culture=neutral, PublicKeyToken=de6f01bd326f8c32, processorArchitecture=MSIL">
+      <HintPath>..\packages\CommandLineParser.1.9.71\lib\net45\CommandLine.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Neo4jClient, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Neo4jClient.2.0.0.7\lib\net45\Neo4jClient.dll</HintPath>
       <Private>True</Private>
@@ -52,6 +56,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Options.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -63,6 +68,10 @@
     <ProjectReference Include="..\Sciendo.MusicBrainz\Sciendo.MusicBrainz.csproj">
       <Project>{8EDB2E5F-B317-4F57-9B74-F3D7EF462BCD}</Project>
       <Name>Sciendo.MusicBrainz</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Sciendo.MusicMatch.Contracts\Sciendo.MusicMatch.Contracts.csproj">
+      <Project>{1fbf4007-6bad-4f83-a976-db2aff3564aa}</Project>
+      <Name>Sciendo.MusicMatch.Contracts</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

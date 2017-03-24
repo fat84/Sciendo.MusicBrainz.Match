@@ -1,7 +1,6 @@
 ﻿using NUnit.Framework;
 using Rhino.Mocks;
 using Sciendo.FilesAnalyser;
-using Sciendo.IOC;
 using Sciendo.MusicMatch.Contracts;
 using TagLib.Id3v2;
 
@@ -13,36 +12,36 @@ namespace Sciendo.MusicBrainz.Match.Tests
         [Test]
         public void RunnerNoFileSystem()
         {
-            Assert.That(() => new Runner(null, null, null,null,null), Throws.ArgumentNullException);
+            Assert.That(() => new Sciendo.FilesAnalyser.Runner(null, null, null,null,null), Throws.ArgumentNullException);
         }
         [Test]
         public void RunnerNoPath()
         {
-            Assert.That(() => new Runner(new FileSystem(), null, null, null, null), Throws.ArgumentNullException);
+            Assert.That(() => new Sciendo.FilesAnalyser.Runner(new FileSystem(), null, null, null, null), Throws.ArgumentNullException);
         }
         [Test]
         public void RunnerNoExtensions()
         {
-            Assert.That(() => new Runner(new FileSystem(), "abc", null, null, null), Throws.ArgumentNullException);
+            Assert.That(() => new Sciendo.FilesAnalyser.Runner(new FileSystem(), "abc", null, null, null), Throws.ArgumentNullException);
         }
         [Test]
         public void RunnerNoAnalyser()
         {
-            Assert.That(() => new Runner(new FileSystem(), "abc", new [] {".mp3"}, null, null), Throws.ArgumentNullException);
+            Assert.That(() => new Sciendo.FilesAnalyser.Runner(new FileSystem(), "abc", new [] {".mp3"}, null, null), Throws.ArgumentNullException);
         }
 
         [Test]
         public void RunnerWrongPath()
         {
             var mockAnalyser = MockRepository.GenerateStub<IAnalyser>();
-            Assert.That(() => new Runner(new FileSystem(), "abc", new[] { ".mp3" }, mockAnalyser, "out.txt"), Throws.ArgumentException);
+            Assert.That(() => new Sciendo.FilesAnalyser.Runner(new FileSystem(), "abc", new[] { ".mp3" }, mockAnalyser, "out.txt"), Throws.ArgumentException);
         }
 
         [Test]
         public void RunnerOk()
         {
             var mockAnalyser = MockRepository.GenerateStub<IAnalyser>();
-            var runner = new Runner(new FileSystem(), "..", new[] { ".mp3" }, mockAnalyser, "out.txt");
+            var runner = new Sciendo.FilesAnalyser.Runner(new FileSystem(), "..", new[] { ".mp3" }, mockAnalyser, "out.txt");
             Assert.IsNotNull(runner.FilesAnalysed);
             Assert.IsEmpty(runner.FilesAnalysed);
         }
@@ -54,7 +53,7 @@ namespace Sciendo.MusicBrainz.Match.Tests
             var mockFileSystem = MockRepository.GenerateStub<IFileSystem>();
             mockFileSystem.Expect(m => m.GetLeafDirectories("..")).Return(null);
             mockFileSystem.Expect(m => m.GetFiles("..", new[] {".mp3"})).Return(null);
-            var runner = new Runner(mockFileSystem, "..", new[] { ".mp3" }, mockAnalyser);
+            var runner = new Sciendo.FilesAnalyser.Runner(mockFileSystem, "..", new[] { ".mp3" }, mockAnalyser);
             runner.Start();
             Assert.IsNotNull(runner.FilesAnalysed);
             Assert.IsEmpty(runner.FilesAnalysed);
@@ -73,7 +72,7 @@ namespace Sciendo.MusicBrainz.Match.Tests
 
             mockAnalyser.Expect(m => m.AnalyseFile("file1.mp3")).Return(new FileAnalysed()).IgnoreArguments();
             mockAnalyser.Expect(m => m.AnalyseFile("file2.mp3")).Return(new FileAnalysed()).IgnoreArguments();
-            var runner = new Runner(mockFileSystem, "..", new[] { ".mp3" }, mockAnalyser);
+            var runner = new Sciendo.FilesAnalyser.Runner(mockFileSystem, "..", new[] { ".mp3" }, mockAnalyser);
             runner.Start();
             Assert.IsNotNull(runner.FilesAnalysed);
             Assert.IsNotEmpty(runner.FilesAnalysed);
@@ -88,7 +87,7 @@ namespace Sciendo.MusicBrainz.Match.Tests
             mockFileSystem.Expect(m => m.GetLeafDirectories("..")).Return(new string[] {"f1","f2","f3"});
             mockFileSystem.Expect(m => m.GetFiles("..", new[] { ".mp3" })).Return(null).IgnoreArguments();
 
-            var runner = new Runner(mockFileSystem, "..", new[] { ".mp3" }, mockAnalyser);
+            var runner = new Sciendo.FilesAnalyser.Runner(mockFileSystem, "..", new[] { ".mp3" }, mockAnalyser);
             runner.Start();
             Assert.IsNotNull(runner.FilesAnalysed);
             Assert.IsEmpty(runner.FilesAnalysed);

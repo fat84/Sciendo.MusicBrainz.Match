@@ -169,35 +169,26 @@ namespace Sciendo.MusicBrainz
                     .AndWhere("ac.name=~{artistName}")
                     .WithParam("artistName", "(?ui).*" + fileAnalysed.Artist + ".*")
                     .Return(t => t.As<MBEntry>()).Results.FirstOrDefault();
-            fileAnalysed.MbId=(result==null)?Guid.Empty:new Guid(result.mbid);
+            fileAnalysed.MbId = (result == null) ? Guid.Empty : new Guid(result.mbid);
             CheckProgress?.Invoke(this,
                 result == null
-                    ? new CheckProgressEventArgs(fileAnalysed.FilePath, false)
-                    : new CheckProgressEventArgs(fileAnalysed.FilePath, true));
+                    ? new CheckProgressEventArgs($"{fileAnalysed.Id} - {fileAnalysed.FilePath}", false)
+                    : new CheckProgressEventArgs($"{fileAnalysed.Id} - {fileAnalysed.FilePath}", true));
             return fileAnalysed;
-        }
-
-        public void CheckBulk(string file, string outputFile)
-        {
-            var filesAnalysed = Serializer.DeserializeFromFile<FileAnalysed>(file);
-            var result = CheckBulk(filesAnalysed).ToList();
-            Serializer.SerializeToFile(result,string.IsNullOrEmpty(outputFile)?file:outputFile);
         }
 
         public IEnumerable<FileAnalysed> CheckBulk(IEnumerable<FileAnalysed> filesAnalysed)
         {
-            return filesAnalysed.AsParallel().Select(f=>Check(f));
+            foreach (var fileAnalysed in filesAnalysed)
+            {
+                if (StopActivity)
+                    break;
+                yield return Check(fileAnalysed);
+            }
         }
 
         public event EventHandler<CheckProgressEventArgs> CheckProgress;
-        public void CheckBulkAndSplit(string file, string matchedoutputFile, string unMatchedOutputFile)
-        {
-            var filesAnalysed = Serializer.DeserializeFromFile<FileAnalysed>(file);
-            var result = CheckBulk(filesAnalysed);
-            
-            Serializer.SerializeToFile(result.Where(f=>f.MbId!=Guid.Empty).ToList(), matchedoutputFile);
-            Serializer.SerializeToFile(result.Where(f => f.MbId == Guid.Empty).ToList(), unMatchedOutputFile);
-        }
+        public bool StopActivity { get; set; }
     }
 
     internal class LocalTrack

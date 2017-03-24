@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Sciendo.Common.Serialization;
-using Sciendo.IOC;
 using Sciendo.MusicMatch.Contracts;
 
 namespace Sciendo.FilesAnalyser
@@ -18,6 +17,7 @@ namespace Sciendo.FilesAnalyser
         private List<FileAnalysed> _filesAnalysed;
         private bool _fileSystemStopped=false;
         private bool _analyserStopped = false;
+        private static long _counter;
 
         public Runner(IFileSystem fileSystem, string path, string[] extensions, IAnalyser analyser, string outputFilePath="")
         {
@@ -45,20 +45,18 @@ namespace Sciendo.FilesAnalyser
 
         public void Start()
         {
+            _counter = 0;
             var folders = _fileSystem.GetLeafDirectories(_path);
             if(folders!=null)
                 foreach (var folder in folders)
                 {
                     if (_fileSystem.StopActivity || _analyser.StopActivity)
                     {
-                        Serializer.SerializeToFile(_filesAnalysed,_outputFilePath);
                         return;
                     }
                     _filesAnalysed.AddRange(RunDirectory(folder));
                 }
             _filesAnalysed.AddRange(RunDirectory(_path));
-            if(!string.IsNullOrEmpty(_outputFilePath))
-                Serializer.SerializeToFile(_filesAnalysed,_outputFilePath);
         }
 
         private IEnumerable<FileAnalysed> RunDirectory(string path)
@@ -70,8 +68,6 @@ namespace Sciendo.FilesAnalyser
             {
                 if (_fileSystem.StopActivity || _analyser.StopActivity)
                 {
-                    if(string.IsNullOrEmpty(_outputFilePath))
-                        Serializer.SerializeToFile(_filesAnalysed,_outputFilePath);
                     break;
                 }
                 var fileAnalysed = _analyser.AnalyseFile(file);
@@ -80,6 +76,7 @@ namespace Sciendo.FilesAnalyser
                 {
                     fileAnalysed.PossiblePartOfACollection = true;
                 }
+                fileAnalysed.Id = _counter++;
                 yield return fileAnalysed;
             }
         }

@@ -16,14 +16,12 @@ namespace Sciendo.MusicBrainz
         void CreateNew(IEnumerable<FileAnalysed> filesAnalysed);
 
         FileAnalysed Check(FileAnalysed fileAnalysed);
-
-        void CheckBulk(string file, string outputFile = "" );
-
+        
         IEnumerable<FileAnalysed> CheckBulk(IEnumerable<FileAnalysed> filesAnalysed);
 
-        void CheckBulkAndSplit(string file, string matchedoutputFile, string unMatchedOutputFile);
-
         event EventHandler<CheckProgressEventArgs> CheckProgress;
+
+        bool StopActivity { get; set; }
 
     }
 }

@@ -64,9 +64,11 @@
   <ItemGroup>
     <Compile Include="CheckProgressEventArgs.cs" />
     <Compile Include="Configuration\MusicBrainzConfigSection.cs" />
+    <Compile Include="IRunnerCollector.cs" />
     <Compile Include="MusicBrainzAdapter.cs" />
     <Compile Include="IMusicBrainzAdapter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Runner.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Sciendo.MusicBrainz.Match\Sciendo.FilesAnalyser.csproj">

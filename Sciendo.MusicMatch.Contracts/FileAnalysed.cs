@@ -1,10 +1,14 @@
 ﻿using System;
+using System.Xml;
+using System.Xml.Serialization;
 
 namespace Sciendo.MusicMatch.Contracts
 {
     public class FileAnalysed
     {
         public string FilePath { get; set; }
+
+        public long Id { get; set; }
 
 
         public string Artist { get; set; }
@@ -25,6 +29,7 @@ namespace Sciendo.MusicMatch.Contracts
 
         public Guid MbId { get; set; }
 
+        [XmlText]
         public string Neo4JMatchingQuery { get; set; }
     }
 }
