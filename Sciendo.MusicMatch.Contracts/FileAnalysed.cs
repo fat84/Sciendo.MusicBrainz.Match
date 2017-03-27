@@ -31,5 +31,9 @@ namespace Sciendo.MusicMatch.Contracts
 
         [XmlText]
         public string Neo4JMatchingQuery { get; set; }
+
+        public MatchStatus MatchStatus { get; set; }
+
+        public string FixSuggestion { get; set; }
     }
 }

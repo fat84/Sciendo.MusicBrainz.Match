@@ -21,6 +21,9 @@ namespace Sciendo.BulkMusicMatcher
         [Option('u',"unmatched", Required=false, HelpText="file for output of the unmatched entries.")]
         public string UnMatched { get; set; }
 
+        [Option('e',"errors",Required=true,DefaultValue = "allnewerrors.xml",HelpText = "file for output of errored entries.")]
+        public string Matchingerrors { get; set; }
+
         public string GetHelpText()
         {
             return CommandLine.Text.HelpText.AutoBuild(this).ToString();

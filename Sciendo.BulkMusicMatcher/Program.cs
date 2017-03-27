@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Neo4jClient;
 using Sciendo.MusicBrainz;
 using Sciendo.MusicBrainz.Configuration;
+using Sciendo.MusicMatch.Contracts;
 
 namespace Sciendo.BulkMusicMatcher
 {
@@ -24,26 +25,16 @@ namespace Sciendo.BulkMusicMatcher
                 client.Connect();
                 MusicBrainzAdapter musicBrainzAdapter = new MusicBrainzAdapter(client);
                 musicBrainzAdapter.CheckProgress += MusicBrainzAdapter_CheckProgress;
-                var runner= new Runner(musicBrainzAdapter,options.Source,options.Matched, options.UnMatched,options.Append);
+                var runner= new Runner(musicBrainzAdapter,options.Source,options.Matched, options.UnMatched,options.Matchingerrors,options.Append);
                 var cancellationTokenSource = new CancellationTokenSource();
                 var cancellationToken = cancellationTokenSource.Token;
                 cancellationToken.Register(runner.Stop);
                 Task runTask = new Task(runner.Start,cancellationToken);
                 runTask.Start();
                 Console.ReadKey();
-                try
-                {
                     cancellationTokenSource.Cancel();
                     runTask.Wait(cancellationToken);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                }
-                finally
-                {
                     runner.CollectAndSave();
-                }
                 return;
             }
             Console.WriteLine(options.GetHelpText());
@@ -52,13 +43,17 @@ namespace Sciendo.BulkMusicMatcher
         private static void MusicBrainzAdapter_CheckProgress(object sender, CheckProgressEventArgs e)
         {
             var previous = Console.ForegroundColor;
-            if (e.Matched)
+            switch (e.MatchStatus)
             {
-                Console.ForegroundColor = ConsoleColor.Green;
-            }
-            else
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
+                case MatchStatus.Matched:
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    break;
+               case MatchStatus.UnMatched:
+                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                    break;
+               case MatchStatus.ErrorMatching:
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    break;
             }
             Console.WriteLine(e.File);
             Console.ForegroundColor = previous;

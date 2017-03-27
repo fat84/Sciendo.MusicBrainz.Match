@@ -37,10 +37,10 @@ namespace Sciendo.MusicBrainz.Match.Tests
             {
                 new FileAnalysed
                 {
-                    Artist = "Jeremy Steiger",
-                    Album = "Look into the flower",
-                    FilePath = @"mycollection\folderpath\myfilepath.mp3",
-                    Title = "Howling for Judy"
+                    Artist = "65daysofstatic",
+                    Album = "The Fall Of Math",
+                    FilePath = @"0-9\65 days of static\The Fall Of Math\65daysofstatic-another-code-against-the-gone.mp3",
+                    Title = "another code against the gone"
                 }
             });
 

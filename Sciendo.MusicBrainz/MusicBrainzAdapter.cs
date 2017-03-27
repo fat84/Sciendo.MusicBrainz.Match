@@ -156,24 +156,40 @@ namespace Sciendo.MusicBrainz
             fileAnalysed.Neo4JMatchingQuery = query.DebugQueryText;
             if (fileAnalysed.Id3TagIncomplete)
             {
-                CheckProgress?.Invoke(this, new CheckProgressEventArgs(fileAnalysed.FilePath,false));
+                CheckProgress?.Invoke(this, new CheckProgressEventArgs(fileAnalysed.FilePath,MatchStatus.ErrorMatching));
+                fileAnalysed.FixSuggestion = "Complete the ID3 Tag.";
                 return fileAnalysed;
             }
-            var result =
-                _graphClient.Cypher.Match(
-                        "(ac:ArtistCredit)-[:CREDITED_ON]->(a:Album)-[:PART_OF]-(b)-[:RELEASED_ON_MEDIUM]-(m:Cd)-[:APPEARS_ON]-(t:Track)")
-                    .Where("a.name=~{albumName}")
-                    .WithParam("albumName", "(?ui).*" + fileAnalysed.Album + ".*")
-                    .AndWhere("t.name=~{title}")
-                    .WithParam("title", "(?ui).*" + fileAnalysed.Title + ".*")
-                    .AndWhere("ac.name=~{artistName}")
-                    .WithParam("artistName", "(?ui).*" + fileAnalysed.Artist + ".*")
-                    .Return(t => t.As<MBEntry>()).Results.FirstOrDefault();
-            fileAnalysed.MbId = (result == null) ? Guid.Empty : new Guid(result.mbid);
-            CheckProgress?.Invoke(this,
+            MBEntry result;
+            try
+            {
+                result =
+                    _graphClient.Cypher.Match(
+                            "(ac:ArtistCredit)-[:CREDITED_ON]->(a:Album)-[:PART_OF]-(b)-[:RELEASED_ON_MEDIUM]-(m:Cd)-[:APPEARS_ON]-(t:Track)")
+                        .Where("a.name=~{albumName}")
+                        .WithParam("albumName", "(?ui).*" + fileAnalysed.Album + ".*")
+                        .AndWhere("t.name=~{title}")
+                        .WithParam("title", "(?ui).*" + fileAnalysed.Title + ".*")
+                        .AndWhere("ac.name=~{artistName}")
+                        .WithParam("artistName", "(?ui).*" + fileAnalysed.Artist + ".*")
+                        .Return(t => t.As<MBEntry>()).Results.FirstOrDefault();
+                fileAnalysed.MbId = (result == null) ? Guid.Empty : new Guid(result.mbid);
+                fileAnalysed.MatchStatus = (result == null) ? MatchStatus.UnMatched : MatchStatus.Matched;
+                fileAnalysed.FixSuggestion = (result == null) ? "No suggestion" : "No Fix needed.";
+
+                CheckProgress?.Invoke(this,
                 result == null
-                    ? new CheckProgressEventArgs($"{fileAnalysed.Id} - {fileAnalysed.FilePath}", false)
-                    : new CheckProgressEventArgs($"{fileAnalysed.Id} - {fileAnalysed.FilePath}", true));
+                    ? new CheckProgressEventArgs($"{fileAnalysed.Id} - {fileAnalysed.FilePath}", MatchStatus.UnMatched)
+                    : new CheckProgressEventArgs($"{fileAnalysed.Id} - {fileAnalysed.FilePath}", MatchStatus.Matched));
+
+            }
+            catch (Exception e)
+            {
+                fileAnalysed.MbId = Guid.Empty;
+                fileAnalysed.MatchStatus = MatchStatus.ErrorMatching;
+                CheckProgress?.Invoke(this,
+                    new CheckProgressEventArgs($"{fileAnalysed.Id} - {fileAnalysed.FilePath}", MatchStatus.ErrorMatching));
+            }
             return fileAnalysed;
         }
 

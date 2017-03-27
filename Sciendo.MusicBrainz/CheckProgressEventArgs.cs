@@ -1,4 +1,5 @@
 ﻿using System;
+using Sciendo.MusicMatch.Contracts;
 
 namespace Sciendo.MusicBrainz
 {
@@ -6,12 +7,12 @@ namespace Sciendo.MusicBrainz
     {
         public string File { get; private set; }
 
-        public bool Matched { get; private set; }
+        public MatchStatus MatchStatus { get; private set; }
 
-        public CheckProgressEventArgs(string file, bool matched)
+        public CheckProgressEventArgs(string file, MatchStatus matchStatus)
         {
             File = file;
-            Matched = matched;
+            MatchStatus = matchStatus;
         }
     }
 }

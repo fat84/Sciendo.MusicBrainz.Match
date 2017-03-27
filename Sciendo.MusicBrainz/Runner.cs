@@ -17,13 +17,15 @@ namespace Sciendo.MusicBrainz
         private string matched;
         private string unMatched;
         private readonly bool _append;
+        private string matchingErrors;
 
-        public Runner(MusicBrainzAdapter musicBrainzAdapter, string source, string matched, string unMatched,bool append)
+        public Runner(MusicBrainzAdapter musicBrainzAdapter, string source, string matched, string unMatched,string matchingErrors, bool append)
         {
             this.musicBrainzAdapter = musicBrainzAdapter;
             this.source = source;
             this.matched = matched;
             this.unMatched = unMatched;
+            this.matchingErrors = matchingErrors;
             _append = append;
         }
 
@@ -42,9 +44,11 @@ namespace Sciendo.MusicBrainz
 
         private long GetStartId()
         {
-            long matchedStart =GetStartId(matched);
-            long unMatchedStart = GetStartId(unMatched);
-            return (matchedStart > unMatchedStart) ? matchedStart : unMatchedStart;
+            List<long> startIds= new List<long>();
+            startIds.Add(GetStartId(matched));
+            startIds.Add(GetStartId(unMatched));
+            startIds.Add(GetStartId(matchingErrors));
+            return startIds.Max(s=>s);
         }
 
         private long GetStartId(string file)
@@ -87,11 +91,15 @@ namespace Sciendo.MusicBrainz
         {
             if (AllResults != null && AllResults.Any())
                 if (string.IsNullOrEmpty(unMatched))
-                    UpSertSave(matched);
+                {
+                    UpSertSave(matched,(FileAnalysed f)=> { return f.MatchStatus != MatchStatus.ErrorMatching; });
+                    UpSertSave(matchingErrors, (FileAnalysed f) => { return f.MatchStatus == MatchStatus.ErrorMatching; });
+                }
                 else
                 {
-                    UpSertSave(matched,(FileAnalysed f)=> { return f.MbId != Guid.Empty; });
-                    UpSertSave(unMatched, (FileAnalysed f) => { return f.MbId == Guid.Empty; });
+                    UpSertSave(matched,(FileAnalysed f)=> { return f.MatchStatus==MatchStatus.Matched; });
+                    UpSertSave(unMatched, (FileAnalysed f) => { return f.MatchStatus==MatchStatus.UnMatched; });
+                    UpSertSave(matchingErrors, (FileAnalysed f) => { return f.MatchStatus == MatchStatus.ErrorMatching; });
                 }
         }
     }
