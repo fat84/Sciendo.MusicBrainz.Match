@@ -4,9 +4,8 @@ using System.Xml.Serialization;
 
 namespace Sciendo.MusicMatch.Contracts
 {
-    public class FileAnalysed
+    public class FileAnalysed:FileAnalysedConsolidated
     {
-        public string FilePath { get; set; }
 
         public long Id { get; set; }
 
@@ -33,7 +32,5 @@ namespace Sciendo.MusicMatch.Contracts
         public string Neo4JMatchingQuery { get; set; }
 
         public MatchStatus MatchStatus { get; set; }
-
-        public string FixSuggestion { get; set; }
     }
 }

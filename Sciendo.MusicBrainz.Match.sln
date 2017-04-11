@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sciendo.BulkMusicMatcher", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sciendo.BulkMatchApplier", "Sciendo.BulkMatchApplier\Sciendo.BulkMatchApplier.csproj", "{091A10C1-B73A-448E-91A9-B07F11475F25}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sciendo.Unmatched.Consolidator", "Sciendo.Unmatched.Consolidator\Sciendo.Unmatched.Consolidator.csproj", "{BF417C60-A4B7-4A9B-B140-00A18DCA36F2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,10 @@ Global
 		{091A10C1-B73A-448E-91A9-B07F11475F25}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{091A10C1-B73A-448E-91A9-B07F11475F25}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{091A10C1-B73A-448E-91A9-B07F11475F25}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BF417C60-A4B7-4A9B-B140-00A18DCA36F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BF417C60-A4B7-4A9B-B140-00A18DCA36F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BF417C60-A4B7-4A9B-B140-00A18DCA36F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BF417C60-A4B7-4A9B-B140-00A18DCA36F2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

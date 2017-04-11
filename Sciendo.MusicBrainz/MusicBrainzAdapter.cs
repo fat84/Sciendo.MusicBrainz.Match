@@ -32,12 +32,30 @@ namespace Sciendo.MusicBrainz
 
         private FileAnalysed Sanitize(FileAnalysed fileAnalysed)
         {
-            fileAnalysed.Title = HttpUtility.HtmlDecode(fileAnalysed.Title).ToLower().Replace(@"\","/");
-            fileAnalysed.Album = HttpUtility.HtmlDecode(fileAnalysed.Album).ToLower().Replace(@"\", "/");
-            fileAnalysed.Artist = HttpUtility.HtmlDecode(fileAnalysed.Artist).ToLower().Replace(@"\", "/");
+            fileAnalysed.Title = Sanitize(fileAnalysed.Title);
+            fileAnalysed.Album = Sanitize(fileAnalysed.Album);
+            fileAnalysed.Artist = Sanitize(fileAnalysed.Artist);
+
             fileAnalysed.FilePath = HttpUtility.HtmlDecode(fileAnalysed.FilePath).ToLower().Replace(@"\", "/");
 
             return fileAnalysed;
+        }
+
+        private string Sanitize(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+                return null;
+            return HttpUtility.HtmlDecode(input)
+                .ToLower()
+                .Replace("\"", ".?")
+                .Replace(@"\", ".?")
+                .Replace(@"'", ".?")
+                .Replace("(", ".?")
+                .Replace(")", ".?")
+                .Replace("[", ".?")
+                .Replace("]", ".?")
+                .Replace("...", "…")
+                .Replace("`", ".?");
         }
 
         private void CreateANewOne(FileAnalysed fileAnalysed)
@@ -144,14 +162,16 @@ namespace Sciendo.MusicBrainz
         //limit 1
         public FileAnalysed Check(FileAnalysed fileAnalysed)
         {
+            var sanitizedFileAnalysed = Sanitize(fileAnalysed);
             var query = _graphClient.Cypher.Match(
                     "(ac:ArtistCredit)-[:CREDITED_ON]->(a:Album)-[:PART_OF]-(b)-[:RELEASED_ON_MEDIUM]-(m:Cd)-[:APPEARS_ON]-(t:Track)")
                 .Where("a.name=~{albumName}")
-                .WithParam("albumName", "(?ui).*" + fileAnalysed.Album + ".*")
+                .OrWhere("a.disambiguation=~{albumName}")
+                .WithParam("albumName", "(?ui).*" + sanitizedFileAnalysed.Album + ".*")
                 .AndWhere("t.name=~{title}")
-                .WithParam("title", "(?ui).*" + fileAnalysed.Title + ".*")
+                .WithParam("title", "(?ui).*" + sanitizedFileAnalysed.Title + ".*")
                 .AndWhere("ac.name=~{artistName}")
-                .WithParam("artistName", "(?ui).*" + fileAnalysed.Artist + ".*")
+                .WithParam("artistName", "(?ui).*" + sanitizedFileAnalysed.Artist + ".*")
                 .Return(t => t.As<MBEntry>()).Query;
             fileAnalysed.Neo4JMatchingQuery = query.DebugQueryText;
             if (fileAnalysed.Id3TagIncomplete)
@@ -167,11 +187,11 @@ namespace Sciendo.MusicBrainz
                     _graphClient.Cypher.Match(
                             "(ac:ArtistCredit)-[:CREDITED_ON]->(a:Album)-[:PART_OF]-(b)-[:RELEASED_ON_MEDIUM]-(m:Cd)-[:APPEARS_ON]-(t:Track)")
                         .Where("a.name=~{albumName}")
-                        .WithParam("albumName", "(?ui).*" + fileAnalysed.Album + ".*")
+                        .WithParam("albumName", "(?ui).*" + sanitizedFileAnalysed.Album + ".*")
                         .AndWhere("t.name=~{title}")
-                        .WithParam("title", "(?ui).*" + fileAnalysed.Title + ".*")
+                        .WithParam("title", "(?ui).*" + sanitizedFileAnalysed.Title + ".*")
                         .AndWhere("ac.name=~{artistName}")
-                        .WithParam("artistName", "(?ui).*" + fileAnalysed.Artist + ".*")
+                        .WithParam("artistName", "(?ui).*" + sanitizedFileAnalysed.Artist + ".*")
                         .Return(t => t.As<MBEntry>()).Results.FirstOrDefault();
                 fileAnalysed.MbId = (result == null) ? Guid.Empty : new Guid(result.mbid);
                 fileAnalysed.MatchStatus = (result == null) ? MatchStatus.UnMatched : MatchStatus.Matched;
