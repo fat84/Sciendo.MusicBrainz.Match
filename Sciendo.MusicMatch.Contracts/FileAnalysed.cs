@@ -32,5 +32,6 @@ namespace Sciendo.MusicMatch.Contracts
         public string Neo4JMatchingQuery { get; set; }
 
         public MatchStatus MatchStatus { get; set; }
+        public string AlbumArtist { get; set; }
     }
 }

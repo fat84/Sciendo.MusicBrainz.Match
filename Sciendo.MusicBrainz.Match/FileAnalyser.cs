@@ -60,8 +60,9 @@ namespace Sciendo.FilesAnalyser
                 FilePath = filePath,
                 InCollectionPath = _collectionPaths.Any(c => filePath.ToLower().Contains(c.ToLower())),
                 MarkedAsPartOfCollection=isPartOfCollection,
-                Id3TagIncomplete=!tagComplete
-                
+                Id3TagIncomplete=!tagComplete,
+                AlbumArtist= (isPartOfCollection)?_collectionMarker:String.Empty
+
             };
         }
 

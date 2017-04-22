@@ -42,6 +42,7 @@
   <ItemGroup>
     <Compile Include="FileAnalysed.cs" />
     <Compile Include="FileAnalysedConsolidated.cs" />
+    <Compile Include="FixSuggestion.cs" />
     <Compile Include="IRunner.cs" />
     <Compile Include="MatchStatus.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

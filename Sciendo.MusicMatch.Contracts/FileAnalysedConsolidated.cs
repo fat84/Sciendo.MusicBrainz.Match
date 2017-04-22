@@ -13,5 +13,7 @@ namespace Sciendo.MusicMatch.Contracts
 
         public string FixSuggestion { get; set; }
 
+        public FixSuggestion FixSuggestions { get; set; }
+
     }
 }

@@ -32,6 +32,7 @@ namespace Sciendo.MusicBrainz
 
         private FileAnalysed Sanitize(FileAnalysed fileAnalysed)
         {
+
             fileAnalysed.Title = Sanitize(fileAnalysed.Title);
             fileAnalysed.Album = Sanitize(fileAnalysed.Album);
             fileAnalysed.Artist = Sanitize(fileAnalysed.Artist);
@@ -154,19 +155,83 @@ namespace Sciendo.MusicBrainz
             throw new NotImplementedException();
         }
 
+        public FileAnalysed Check(FileAnalysed fileAnalysed)
+        {
+            return (fileAnalysed.MarkedAsPartOfCollection)
+                ? CheckInCollection(fileAnalysed)
+                : CheckNotInCollection(fileAnalysed);
+        }
+
+        private FileAnalysed CheckInCollection(FileAnalysed fileAnalysed)
+        {
+            var sanitizedFileAnalysed = Sanitize(fileAnalysed);
+            var query = _graphClient.Cypher.Match(
+                    "(ac:ArtistCredit)-[:CREDITED_ON]->(a:Album)-[:PART_OF]-(b)-[:RELEASED_ON_MEDIUM]-(m)-[:APPEARS_ON]-(t:Track)-[:CREDITED_ON]-(tac:ArtistCredit)")
+                .Where("(a.name=~{albumName} OR a.disambiguation=~{albumName})")
+                .WithParam("albumName", "(?ui).*" + sanitizedFileAnalysed.Album + ".*")
+                .AndWhere("t.name=~{title}")
+                .WithParam("title", "(?ui).*" + sanitizedFileAnalysed.Title + ".*")
+                .AndWhere("tac.name=~{artistName}")
+                .WithParam("artistName", "(?ui).*" + sanitizedFileAnalysed.Artist + ".*")
+                .AndWhere("ac.name=~{albumArtistName}")
+                .WithParam("albumArtistName","(?ui)"+fileAnalysed.AlbumArtist)
+                .Return(t => t.As<MBEntry>()).Query;
+            fileAnalysed.Neo4JMatchingQuery = query.DebugQueryText;
+            if (fileAnalysed.Id3TagIncomplete)
+            {
+                CheckProgress?.Invoke(this, new CheckProgressEventArgs(fileAnalysed.FilePath, MatchStatus.ErrorMatching));
+                fileAnalysed.FixSuggestion = "Complete the ID3 Tag.";
+                return fileAnalysed;
+            }
+            MBEntry result;
+            try
+            {
+                result =
+                    _graphClient.Cypher.Match(
+                    "(ac:ArtistCredit)-[:CREDITED_ON]->(a:Album)-[:PART_OF]-(b)-[:RELEASED_ON_MEDIUM]-(m)-[:APPEARS_ON]-(t:Track)-[:CREDITED_ON]-(tac:ArtistCredit)")
+                .Where("(a.name=~{albumName} OR a.disambiguation=~{albumName})")
+                .WithParam("albumName", "(?ui).*" + sanitizedFileAnalysed.Album + ".*")
+                .AndWhere("t.name=~{title}")
+                .WithParam("title", "(?ui).*" + sanitizedFileAnalysed.Title + ".*")
+                .AndWhere("tac.name=~{artistName}")
+                .WithParam("artistName", "(?ui).*" + sanitizedFileAnalysed.Artist + ".*")
+                .AndWhere("ac.name=~{albumArtistName}")
+                .WithParam("albumArtistName", "(?ui)" + fileAnalysed.AlbumArtist)
+                        .Return(t => t.As<MBEntry>()).Results.FirstOrDefault();
+                fileAnalysed.MbId = (result == null) ? Guid.Empty : new Guid(result.mbid);
+                fileAnalysed.MatchStatus = (result == null) ? MatchStatus.UnMatched : MatchStatus.Matched;
+                fileAnalysed.FixSuggestion = (result == null) ? "No suggestion" : "No Fix needed.";
+                fileAnalysed.FixSuggestions = new FixSuggestion();
+
+                CheckProgress?.Invoke(this,
+                result == null
+                    ? new CheckProgressEventArgs($"{fileAnalysed.Id} - {fileAnalysed.FilePath}", MatchStatus.UnMatched)
+                    : new CheckProgressEventArgs($"{fileAnalysed.Id} - {fileAnalysed.FilePath}", MatchStatus.Matched));
+
+            }
+            catch (Exception e)
+            {
+                fileAnalysed.MbId = Guid.Empty;
+                fileAnalysed.MatchStatus = MatchStatus.ErrorMatching;
+                CheckProgress?.Invoke(this,
+                    new CheckProgressEventArgs($"{fileAnalysed.Id} - {fileAnalysed.FilePath}", MatchStatus.ErrorMatching));
+            }
+            return fileAnalysed;
+        }
+
+
         //MATCH (ac:ArtistCredit)-[:CREDITED_ON]->(a:Album)-[:PART_OF]-(b)-[:RELEASED_ON_MEDIUM]-(m:Cd)-[:APPEARS_ON]-(t:Track)
         //WHERE a.name=~"(?ui).*True Blue.*"
         //and t.name=~"(?ui).*Open Your Heart.*"
         //and ac.name=~"(?ui).*Madonna.*"//
         //Return t.mbid
         //limit 1
-        public FileAnalysed Check(FileAnalysed fileAnalysed)
+        private FileAnalysed CheckNotInCollection(FileAnalysed fileAnalysed)
         {
             var sanitizedFileAnalysed = Sanitize(fileAnalysed);
             var query = _graphClient.Cypher.Match(
-                    "(ac:ArtistCredit)-[:CREDITED_ON]->(a:Album)-[:PART_OF]-(b)-[:RELEASED_ON_MEDIUM]-(m:Cd)-[:APPEARS_ON]-(t:Track)")
-                .Where("a.name=~{albumName}")
-                .OrWhere("a.disambiguation=~{albumName}")
+                    "(ac:ArtistCredit)-[:CREDITED_ON]->(a:Album)-[:PART_OF]-(b)-[:RELEASED_ON_MEDIUM]-(m)-[:APPEARS_ON]-(t:Track)")
+                .Where("(a.name=~{albumName} OR a.disambiguation=~{albumName})")
                 .WithParam("albumName", "(?ui).*" + sanitizedFileAnalysed.Album + ".*")
                 .AndWhere("t.name=~{title}")
                 .WithParam("title", "(?ui).*" + sanitizedFileAnalysed.Title + ".*")
@@ -185,7 +250,7 @@ namespace Sciendo.MusicBrainz
             {
                 result =
                     _graphClient.Cypher.Match(
-                            "(ac:ArtistCredit)-[:CREDITED_ON]->(a:Album)-[:PART_OF]-(b)-[:RELEASED_ON_MEDIUM]-(m:Cd)-[:APPEARS_ON]-(t:Track)")
+                            "(ac:ArtistCredit)-[:CREDITED_ON]->(a:Album)-[:PART_OF]-(b)-[:RELEASED_ON_MEDIUM]-(m)-[:APPEARS_ON]-(t:Track)")
                         .Where("a.name=~{albumName}")
                         .WithParam("albumName", "(?ui).*" + sanitizedFileAnalysed.Album + ".*")
                         .AndWhere("t.name=~{title}")
@@ -196,6 +261,7 @@ namespace Sciendo.MusicBrainz
                 fileAnalysed.MbId = (result == null) ? Guid.Empty : new Guid(result.mbid);
                 fileAnalysed.MatchStatus = (result == null) ? MatchStatus.UnMatched : MatchStatus.Matched;
                 fileAnalysed.FixSuggestion = (result == null) ? "No suggestion" : "No Fix needed.";
+                fileAnalysed.FixSuggestions = new FixSuggestion();
 
                 CheckProgress?.Invoke(this,
                 result == null

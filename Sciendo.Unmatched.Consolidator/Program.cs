@@ -18,7 +18,7 @@ namespace Sciendo.Unmatched.Consolidator
                 var filesAnalysed = Serializer.DeserializeFromFile<FileAnalysed>(options.Source);
 
                 var suggestions =
-                    filesAnalysed.Where(f => f.FixSuggestion != "No Suggestion")
+                    filesAnalysed.Where(f => f.FixSuggestion.ToLower() != "no suggestion")
                         .Select(f => new FileAnalysedConsolidated { FilePath = f.FilePath, FixSuggestion = f.FixSuggestion }).ToList();
                 Serializer.SerializeToFile(suggestions, options.Output);
                 return;
