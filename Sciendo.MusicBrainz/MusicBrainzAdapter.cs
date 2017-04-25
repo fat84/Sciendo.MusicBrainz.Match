@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using Neo4jClient;
+using Neo4jClient.Cypher;
 using Sciendo.Common.Serialization;
 using Sciendo.FilesAnalyser;
 using Sciendo.MusicMatch.Contracts;
@@ -26,7 +27,9 @@ namespace Sciendo.MusicBrainz
             {
                 var sanitizedFileAnalysed = Sanitize(fileAnalysed);
                 if (!LinkOneToExisting(sanitizedFileAnalysed))
-                    CreateANewOne(sanitizedFileAnalysed);
+                    if(ApplyProgress!=null)
+                        ApplyProgress(this,new ApplyProgressEventArgs(fileAnalysed.FilePath,ApplyStatus.ErrorApplying));
+                    //CreateANewOne(sanitizedFileAnalysed);
             }
         }
 
@@ -48,6 +51,7 @@ namespace Sciendo.MusicBrainz
                 return null;
             return HttpUtility.HtmlDecode(input)
                 .ToLower()
+                .Replace("?",".?")
                 .Replace("\"", ".?")
                 .Replace(@"\", ".?")
                 .Replace(@"'", ".?")
@@ -108,46 +112,92 @@ namespace Sciendo.MusicBrainz
         //MERGE(t)-[lr: HAVE_LOCAL]-(l:localTrack {name:'c:\\my path\\donna.mp3'})
         private bool LinkOneToExisting(FileAnalysed fileAnalysed)
         {
-            _graphClient.Cypher.Match("(l:localTrack)")
-                .Where("l.name={filePath}")
-                .WithParam("filePath", fileAnalysed.FilePath.Replace(@"\", @"/"))
-                .DetachDelete("l").ExecuteWithoutResults();
+            fileAnalysed.Neo4jApplyQuerries=new List<Neo4jApplyQuery>();
+            fileAnalysed.Neo4jApplyQuerries.Add(new Neo4jApplyQuery
+            {
+                ApplyStatus = ApplyStatus.None,
+                DebugQuery = DeleteLocalTrack(fileAnalysed).Query.DebugQueryText
+            });
+            DeleteLocalTrack(fileAnalysed).ExecuteWithoutResults();
 
-            _graphClient.Cypher.Match(
-                     "(a:Album)-[:PART_OF]-(b)-[:RELEASED_ON_MEDIUM]-(m:Cd)<-[*..3]-(ac:ArtistCredit)")
-                 .Where("a.name=~{albumName}")
-                 .WithParam("albumName", "(?ui).*" + fileAnalysed.Album + ".*")
-                 .AndWhere("ac.name=~{artistName}")
-                 .WithParam("artistName", "(?ui).*" + fileAnalysed.Artist + ".*")
-                 .With("a,m,ac")
-                 .Limit(1)
-                 .Match("(m)<-[:APPEARS_ON]-(t:Track)-[lp]-(l:localTrack)")
-                 .Where("t.name=~{trackName}")
-                 .WithParam("trackName", "(?ui).*" + fileAnalysed.Title + ".*")
-                 .DetachDelete("l").ExecuteWithoutResults();
+            if (fileAnalysed.MarkedAsPartOfCollection)
+            {
+                if(LinkOneToExisting(fileAnalysed, GetMatchInCollectionQuery))
+                {
+                    if (ApplyProgress!=null)
+                        ApplyProgress(this,new ApplyProgressEventArgs(fileAnalysed.FilePath,ApplyStatus.ApplyedToExistingInCollection));
+                    return true;
+                }
+                else
+                {
+                    if(ApplyProgress!=null)
+                        ApplyProgress(this, new ApplyProgressEventArgs(fileAnalysed.FilePath,ApplyStatus.ErrorApplying));
+                    return false;
+                }
+            }
+            else
+            {
+                if (LinkOneToExisting(fileAnalysed, GetMatchNotInCollectionQuery))
+                {
+                    if(ApplyProgress!=null)
+                        ApplyProgress(this,new ApplyProgressEventArgs(fileAnalysed.FilePath,ApplyStatus.ApplyedToExistingNotInCollection));
+                    return true;
+                }
+                else
+                {
+                    if (ApplyProgress != null)
+                    {
+                        ApplyProgress(this, new ApplyProgressEventArgs(fileAnalysed.FilePath,ApplyStatus.ErrorApplying));
+                    }
+                    return false;
+                }
+            }
 
-            var results = _graphClient.Cypher.Match(
-                    "(a:Album)-[:PART_OF]-(b)-[:RELEASED_ON_MEDIUM]-(m:Cd)<-[*..3]-(ac:ArtistCredit)")
-                .Where("a.name=~{albumName}")
-                .WithParam("albumName", "(?ui).*" + fileAnalysed.Album + ".*")
-                .AndWhere("ac.name=~{artistName}")
-                .WithParam("artistName", "(?ui).*" + fileAnalysed.Artist + ".*")
-                .With("a,m,ac")
-                .Limit(1)
-                .Match("(m)<-[:APPEARS_ON]-(t:Track)")
-                .Where("t.name=~{trackName}")
-                .WithParam("trackName", "(?ui).*" + fileAnalysed.Title + ".*")
-                .Merge("(t)-[lr: HAVE_LOCAL]-(l:localTrack {name:'" + fileAnalysed.FilePath + "'})")
-                .Return(l => l.As<LocalTrack>())
-                .Query;
-
-            //return (results > 0);
-            return true;
         }
 
-        private void LinkToExistinginCollection(FileAnalysed fileAnalysed)
+        private ICypherFluentQuery DeleteLocalTrack(FileAnalysed fileAnalysed)
         {
-            throw new NotImplementedException();
+            return _graphClient.Cypher.Match("(l:localTrack)")
+                .Where("l.name={filePath}")
+                .WithParam("filePath", fileAnalysed.FilePath)
+                .DetachDelete("l");
+        }
+
+        private bool LinkOneToExisting(FileAnalysed fileAnalysed, Func<FileAnalysed,ICypherFluentQuery> getMatchQuery)
+        {
+            fileAnalysed.Neo4jApplyQuerries.Add(new Neo4jApplyQuery
+            {
+                ApplyStatus = ApplyStatus.None,
+                DebugQuery = DeleteCurrentLocalTrack(fileAnalysed, getMatchQuery).Query.DebugQueryText
+            });
+            DeleteCurrentLocalTrack(fileAnalysed, getMatchQuery).ExecuteWithoutResults();
+
+            fileAnalysed.Neo4jApplyQuerries.Add(new Neo4jApplyQuery
+            {
+                ApplyStatus = ApplyStatus.None,
+                DebugQuery = UpdateLocalTrack(fileAnalysed, getMatchQuery).Query.DebugQueryText
+            });
+            var results = UpdateLocalTrack(fileAnalysed, getMatchQuery).Results.Count();
+
+            return (results > 0);
+        }
+
+        private static ICypherFluentQuery<LocalTrack> UpdateLocalTrack(FileAnalysed fileAnalysed, Func<FileAnalysed, ICypherFluentQuery> getMatchQuery)
+        {
+            return getMatchQuery(fileAnalysed)
+                .With("t")
+                .Limit(1)
+                .Merge("(t)-[lr: HAVE_LOCAL]-(l:localTrack {name:'" + fileAnalysed.FilePath + "'})")
+                .Return(l => l.As<LocalTrack>());
+        }
+
+        private static ICypherFluentQuery DeleteCurrentLocalTrack(FileAnalysed fileAnalysed, Func<FileAnalysed, ICypherFluentQuery> getMatchQuery)
+        {
+            return getMatchQuery(fileAnalysed)
+                .With("t")
+                .Limit(1)
+                .Match("(t)-[lp]-(l:localTrack)")
+                .DetachDelete("l");
         }
 
         public void CreateNew(IEnumerable<FileAnalysed> fileAnalysed)
@@ -165,29 +215,43 @@ namespace Sciendo.MusicBrainz
         private FileAnalysed CheckInCollection(FileAnalysed fileAnalysed)
         {
             var sanitizedFileAnalysed = Sanitize(fileAnalysed);
-            var query = _graphClient.Cypher.Match(
-                    "(ac:ArtistCredit)-[:CREDITED_ON]->(a:Album)-[:PART_OF]-(b)-[:RELEASED_ON_MEDIUM]-(m)-[:APPEARS_ON]-(t:Track)-[:CREDITED_ON]-(tac:ArtistCredit)")
-                .Where("(a.name=~{albumName} OR a.disambiguation=~{albumName})")
-                .WithParam("albumName", "(?ui).*" + sanitizedFileAnalysed.Album + ".*")
-                .AndWhere("t.name=~{title}")
-                .WithParam("title", "(?ui).*" + sanitizedFileAnalysed.Title + ".*")
-                .AndWhere("tac.name=~{artistName}")
-                .WithParam("artistName", "(?ui).*" + sanitizedFileAnalysed.Artist + ".*")
-                .AndWhere("ac.name=~{albumArtistName}")
-                .WithParam("albumArtistName","(?ui)"+fileAnalysed.AlbumArtist)
+            var query = GetMatchInCollectionQuery(sanitizedFileAnalysed)
                 .Return(t => t.As<MBEntry>()).Query;
             fileAnalysed.Neo4JMatchingQuery = query.DebugQueryText;
             if (fileAnalysed.Id3TagIncomplete)
             {
-                CheckProgress?.Invoke(this, new CheckProgressEventArgs(fileAnalysed.FilePath, MatchStatus.ErrorMatching));
+                CheckMatchingProgress?.Invoke(this, new CheckMatchingProgressEventArgs(fileAnalysed.FilePath, MatchStatus.ErrorMatching));
                 fileAnalysed.FixSuggestion = "Complete the ID3 Tag.";
                 return fileAnalysed;
             }
             MBEntry result;
             try
             {
-                result =
-                    _graphClient.Cypher.Match(
+                result = GetMatchInCollectionQuery(sanitizedFileAnalysed).Return(t => t.As<MBEntry>()).Results.FirstOrDefault();
+                fileAnalysed.MbId = (result == null) ? Guid.Empty : new Guid(result.mbid);
+                fileAnalysed.MatchStatus = (result == null) ? MatchStatus.UnMatched : MatchStatus.Matched;
+                fileAnalysed.FixSuggestion = (result == null) ? "No suggestion" : "No Fix needed.";
+                fileAnalysed.FixSuggestions = new FixSuggestion();
+
+                CheckMatchingProgress?.Invoke(this,
+                result == null
+                    ? new CheckMatchingProgressEventArgs($"{fileAnalysed.Id} - {fileAnalysed.FilePath}", MatchStatus.UnMatched)
+                    : new CheckMatchingProgressEventArgs($"{fileAnalysed.Id} - {fileAnalysed.FilePath}", MatchStatus.Matched));
+
+            }
+            catch (Exception e)
+            {
+                fileAnalysed.MbId = Guid.Empty;
+                fileAnalysed.MatchStatus = MatchStatus.ErrorMatching;
+                CheckMatchingProgress?.Invoke(this,
+                    new CheckMatchingProgressEventArgs($"{fileAnalysed.Id} - {fileAnalysed.FilePath}", MatchStatus.ErrorMatching));
+            }
+            return fileAnalysed;
+        }
+
+        private ICypherFluentQuery GetMatchInCollectionQuery(FileAnalysed sanitizedFileAnalysed)
+        {
+            return _graphClient.Cypher.Match(
                     "(ac:ArtistCredit)-[:CREDITED_ON]->(a:Album)-[:PART_OF]-(b)-[:RELEASED_ON_MEDIUM]-(m)-[:APPEARS_ON]-(t:Track)-[:CREDITED_ON]-(tac:ArtistCredit)")
                 .Where("(a.name=~{albumName} OR a.disambiguation=~{albumName})")
                 .WithParam("albumName", "(?ui).*" + sanitizedFileAnalysed.Album + ".*")
@@ -196,27 +260,7 @@ namespace Sciendo.MusicBrainz
                 .AndWhere("tac.name=~{artistName}")
                 .WithParam("artistName", "(?ui).*" + sanitizedFileAnalysed.Artist + ".*")
                 .AndWhere("ac.name=~{albumArtistName}")
-                .WithParam("albumArtistName", "(?ui)" + fileAnalysed.AlbumArtist)
-                        .Return(t => t.As<MBEntry>()).Results.FirstOrDefault();
-                fileAnalysed.MbId = (result == null) ? Guid.Empty : new Guid(result.mbid);
-                fileAnalysed.MatchStatus = (result == null) ? MatchStatus.UnMatched : MatchStatus.Matched;
-                fileAnalysed.FixSuggestion = (result == null) ? "No suggestion" : "No Fix needed.";
-                fileAnalysed.FixSuggestions = new FixSuggestion();
-
-                CheckProgress?.Invoke(this,
-                result == null
-                    ? new CheckProgressEventArgs($"{fileAnalysed.Id} - {fileAnalysed.FilePath}", MatchStatus.UnMatched)
-                    : new CheckProgressEventArgs($"{fileAnalysed.Id} - {fileAnalysed.FilePath}", MatchStatus.Matched));
-
-            }
-            catch (Exception e)
-            {
-                fileAnalysed.MbId = Guid.Empty;
-                fileAnalysed.MatchStatus = MatchStatus.ErrorMatching;
-                CheckProgress?.Invoke(this,
-                    new CheckProgressEventArgs($"{fileAnalysed.Id} - {fileAnalysed.FilePath}", MatchStatus.ErrorMatching));
-            }
-            return fileAnalysed;
+                .WithParam("albumArtistName","(?ui)"+sanitizedFileAnalysed.AlbumArtist);
         }
 
 
@@ -229,54 +273,50 @@ namespace Sciendo.MusicBrainz
         private FileAnalysed CheckNotInCollection(FileAnalysed fileAnalysed)
         {
             var sanitizedFileAnalysed = Sanitize(fileAnalysed);
-            var query = _graphClient.Cypher.Match(
-                    "(ac:ArtistCredit)-[:CREDITED_ON]->(a:Album)-[:PART_OF]-(b)-[:RELEASED_ON_MEDIUM]-(m)-[:APPEARS_ON]-(t:Track)")
-                .Where("(a.name=~{albumName} OR a.disambiguation=~{albumName})")
-                .WithParam("albumName", "(?ui).*" + sanitizedFileAnalysed.Album + ".*")
-                .AndWhere("t.name=~{title}")
-                .WithParam("title", "(?ui).*" + sanitizedFileAnalysed.Title + ".*")
-                .AndWhere("ac.name=~{artistName}")
-                .WithParam("artistName", "(?ui).*" + sanitizedFileAnalysed.Artist + ".*")
+            var query = GetMatchNotInCollectionQuery(sanitizedFileAnalysed)
                 .Return(t => t.As<MBEntry>()).Query;
             fileAnalysed.Neo4JMatchingQuery = query.DebugQueryText;
             if (fileAnalysed.Id3TagIncomplete)
             {
-                CheckProgress?.Invoke(this, new CheckProgressEventArgs(fileAnalysed.FilePath,MatchStatus.ErrorMatching));
+                CheckMatchingProgress?.Invoke(this, new CheckMatchingProgressEventArgs(fileAnalysed.FilePath,MatchStatus.ErrorMatching));
                 fileAnalysed.FixSuggestion = "Complete the ID3 Tag.";
                 return fileAnalysed;
             }
             MBEntry result;
             try
             {
-                result =
-                    _graphClient.Cypher.Match(
-                            "(ac:ArtistCredit)-[:CREDITED_ON]->(a:Album)-[:PART_OF]-(b)-[:RELEASED_ON_MEDIUM]-(m)-[:APPEARS_ON]-(t:Track)")
-                        .Where("a.name=~{albumName}")
-                        .WithParam("albumName", "(?ui).*" + sanitizedFileAnalysed.Album + ".*")
-                        .AndWhere("t.name=~{title}")
-                        .WithParam("title", "(?ui).*" + sanitizedFileAnalysed.Title + ".*")
-                        .AndWhere("ac.name=~{artistName}")
-                        .WithParam("artistName", "(?ui).*" + sanitizedFileAnalysed.Artist + ".*")
-                        .Return(t => t.As<MBEntry>()).Results.FirstOrDefault();
+                result = GetMatchNotInCollectionQuery(sanitizedFileAnalysed).Return(t => t.As<MBEntry>()).Results.FirstOrDefault();
                 fileAnalysed.MbId = (result == null) ? Guid.Empty : new Guid(result.mbid);
                 fileAnalysed.MatchStatus = (result == null) ? MatchStatus.UnMatched : MatchStatus.Matched;
                 fileAnalysed.FixSuggestion = (result == null) ? "No suggestion" : "No Fix needed.";
                 fileAnalysed.FixSuggestions = new FixSuggestion();
 
-                CheckProgress?.Invoke(this,
+                CheckMatchingProgress?.Invoke(this,
                 result == null
-                    ? new CheckProgressEventArgs($"{fileAnalysed.Id} - {fileAnalysed.FilePath}", MatchStatus.UnMatched)
-                    : new CheckProgressEventArgs($"{fileAnalysed.Id} - {fileAnalysed.FilePath}", MatchStatus.Matched));
+                    ? new CheckMatchingProgressEventArgs($"{fileAnalysed.Id} - {fileAnalysed.FilePath}", MatchStatus.UnMatched)
+                    : new CheckMatchingProgressEventArgs($"{fileAnalysed.Id} - {fileAnalysed.FilePath}", MatchStatus.Matched));
 
             }
             catch (Exception e)
             {
                 fileAnalysed.MbId = Guid.Empty;
                 fileAnalysed.MatchStatus = MatchStatus.ErrorMatching;
-                CheckProgress?.Invoke(this,
-                    new CheckProgressEventArgs($"{fileAnalysed.Id} - {fileAnalysed.FilePath}", MatchStatus.ErrorMatching));
+                CheckMatchingProgress?.Invoke(this,
+                    new CheckMatchingProgressEventArgs($"{fileAnalysed.Id} - {fileAnalysed.FilePath}", MatchStatus.ErrorMatching));
             }
             return fileAnalysed;
+        }
+
+        private ICypherFluentQuery GetMatchNotInCollectionQuery(FileAnalysed sanitizedFileAnalysed)
+        {
+            return _graphClient.Cypher.Match(
+                    "(ac:ArtistCredit)-[:CREDITED_ON]->(a:Album)-[:PART_OF]-(b)-[:RELEASED_ON_MEDIUM]-(m)-[:APPEARS_ON]-(t:Track)")
+                .Where("(a.name=~{albumName} OR a.disambiguation=~{albumName})")
+                .WithParam("albumName", "(?ui).*" + sanitizedFileAnalysed.Album + ".*")
+                .AndWhere("t.name=~{title}")
+                .WithParam("title", "(?ui).*" + sanitizedFileAnalysed.Title + ".*")
+                .AndWhere("ac.name=~{artistName}")
+                .WithParam("artistName", "(?ui).*" + sanitizedFileAnalysed.Artist + ".*");
         }
 
         public IEnumerable<FileAnalysed> CheckBulk(IEnumerable<FileAnalysed> filesAnalysed)
@@ -289,8 +329,9 @@ namespace Sciendo.MusicBrainz
             }
         }
 
-        public event EventHandler<CheckProgressEventArgs> CheckProgress;
+        public event EventHandler<CheckMatchingProgressEventArgs> CheckMatchingProgress;
         public bool StopActivity { get; set; }
+        public event EventHandler<ApplyProgressEventArgs> ApplyProgress;
     }
 
     internal class LocalTrack

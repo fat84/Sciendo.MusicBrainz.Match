@@ -24,8 +24,8 @@ namespace Sciendo.BulkMusicMatcher
                 GraphClient client = new GraphClient(new Uri(connectionString.Url), connectionString.UserName, connectionString.Password);
                 client.Connect();
                 MusicBrainzAdapter musicBrainzAdapter = new MusicBrainzAdapter(client);
-                musicBrainzAdapter.CheckProgress += MusicBrainzAdapter_CheckProgress;
-                var runner= new Runner(musicBrainzAdapter,options.Source,options.Matched, options.UnMatched,options.Matchingerrors,options.Append);
+                musicBrainzAdapter.CheckMatchingProgress += MusicBrainzAdapter_CheckProgress;
+                var runner= new RunnerCollector(musicBrainzAdapter,options.Source,options.Matched, options.UnMatched,options.Matchingerrors,options.Append);
                 var cancellationTokenSource = new CancellationTokenSource();
                 var cancellationToken = cancellationTokenSource.Token;
                 cancellationToken.Register(runner.Stop);
@@ -40,7 +40,7 @@ namespace Sciendo.BulkMusicMatcher
             Console.WriteLine(options.GetHelpText());
         }
 
-        private static void MusicBrainzAdapter_CheckProgress(object sender, CheckProgressEventArgs e)
+        private static void MusicBrainzAdapter_CheckProgress(object sender, CheckMatchingProgressEventArgs e)
         {
             var previous = Console.ForegroundColor;
             switch (e.MatchStatus)

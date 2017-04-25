@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -33,5 +34,7 @@ namespace Sciendo.MusicMatch.Contracts
 
         public MatchStatus MatchStatus { get; set; }
         public string AlbumArtist { get; set; }
+
+        public List<Neo4jApplyQuery> Neo4jApplyQuerries { get; set; } 
     }
 }

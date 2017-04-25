@@ -10,7 +10,7 @@ using Sciendo.MusicMatch.Contracts;
 
 namespace Sciendo.MusicBrainz
 {
-    public class Runner:IRunnerCollector
+    public class RunnerCollector:IRunnerCollector
     {
         private MusicBrainzAdapter musicBrainzAdapter;
         private string source;
@@ -19,7 +19,7 @@ namespace Sciendo.MusicBrainz
         private readonly bool _append;
         private string matchingErrors;
 
-        public Runner(MusicBrainzAdapter musicBrainzAdapter, string source, string matched, string unMatched,string matchingErrors, bool append)
+        public RunnerCollector(MusicBrainzAdapter musicBrainzAdapter, string source, string matched, string unMatched,string matchingErrors, bool append)
         {
             this.musicBrainzAdapter = musicBrainzAdapter;
             this.source = source;

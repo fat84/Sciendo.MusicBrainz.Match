@@ -19,9 +19,10 @@ namespace Sciendo.MusicBrainz
         
         IEnumerable<FileAnalysed> CheckBulk(IEnumerable<FileAnalysed> filesAnalysed);
 
-        event EventHandler<CheckProgressEventArgs> CheckProgress;
+        event EventHandler<CheckMatchingProgressEventArgs> CheckMatchingProgress;
+
+        event EventHandler<ApplyProgressEventArgs> ApplyProgress;
 
         bool StopActivity { get; set; }
-
     }
 }

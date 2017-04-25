@@ -40,11 +40,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ApplyStatus.cs" />
     <Compile Include="FileAnalysed.cs" />
     <Compile Include="FileAnalysedConsolidated.cs" />
     <Compile Include="FixSuggestion.cs" />
     <Compile Include="IRunner.cs" />
     <Compile Include="MatchStatus.cs" />
+    <Compile Include="Neo4jApplyQuery.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

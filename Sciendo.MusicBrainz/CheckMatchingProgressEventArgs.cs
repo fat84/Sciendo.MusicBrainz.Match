@@ -3,13 +3,13 @@ using Sciendo.MusicMatch.Contracts;
 
 namespace Sciendo.MusicBrainz
 {
-    public class CheckProgressEventArgs:EventArgs
+    public class CheckMatchingProgressEventArgs:EventArgs
     {
         public string File { get; private set; }
 
         public MatchStatus MatchStatus { get; private set; }
 
-        public CheckProgressEventArgs(string file, MatchStatus matchStatus)
+        public CheckMatchingProgressEventArgs(string file, MatchStatus matchStatus)
         {
             File = file;
             MatchStatus = matchStatus;

@@ -26,11 +26,6 @@ namespace Sciendo.MusicBrainz.Match.Tests
         [Test]
         public void Neo4JTestLinkLocalToExsiting()
         {
-            //for a non-collection album
-            //match(a:Album)-[r: PART_OF]-(b)-[r1: RELEASED_ON_MEDIUM]-(m:Cd)<-[*..3]-(ac:ArtistCredit) where a.name=~"(?i)10CC" and ac.name=~"(?i)10CC" 
-            //with a, m, ac limit 1 match(m)<-[p: APPEARS_ON]-(t:Track) where t.name=~"(?i)DONNA" 
-            //MERGE(t)-[lr: HAVE_LOCAL]-(l:localTrack {name:'c:\\my path\\donna.mp3'})
-            
             MusicBrainzAdapter musicBrainzAdapter=new MusicBrainzAdapter(_client);
 
             musicBrainzAdapter.LinkToExisting(new FileAnalysed[]
