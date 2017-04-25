@@ -65,6 +65,7 @@
     <Compile Include="ApplyProgressEventArgs.cs" />
     <Compile Include="CheckMatchingProgressEventArgs.cs" />
     <Compile Include="Configuration\MusicBrainzConfigSection.cs" />
+    <Compile Include="ExtensionMethods.cs" />
     <Compile Include="IRunnerCollector.cs" />
     <Compile Include="MusicBrainzAdapter.cs" />
     <Compile Include="IMusicBrainzAdapter.cs" />

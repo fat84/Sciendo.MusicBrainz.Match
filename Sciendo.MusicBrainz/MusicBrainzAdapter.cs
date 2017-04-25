@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
 using Neo4jClient;
 using Neo4jClient.Cypher;
-using Sciendo.Common.Serialization;
-using Sciendo.FilesAnalyser;
 using Sciendo.MusicMatch.Contracts;
 
 namespace Sciendo.MusicBrainz
@@ -25,42 +22,11 @@ namespace Sciendo.MusicBrainz
 
             foreach (var fileAnalysed in filesAnalysed)
             {
-                var sanitizedFileAnalysed = Sanitize(fileAnalysed);
-                if (!LinkOneToExisting(sanitizedFileAnalysed))
+                if (!LinkOneToExisting(fileAnalysed))
                     if(ApplyProgress!=null)
                         ApplyProgress(this,new ApplyProgressEventArgs(fileAnalysed.FilePath,ApplyStatus.ErrorApplying));
                     //CreateANewOne(sanitizedFileAnalysed);
             }
-        }
-
-        private FileAnalysed Sanitize(FileAnalysed fileAnalysed)
-        {
-
-            fileAnalysed.Title = Sanitize(fileAnalysed.Title);
-            fileAnalysed.Album = Sanitize(fileAnalysed.Album);
-            fileAnalysed.Artist = Sanitize(fileAnalysed.Artist);
-
-            fileAnalysed.FilePath = HttpUtility.HtmlDecode(fileAnalysed.FilePath).ToLower().Replace(@"\", "/");
-
-            return fileAnalysed;
-        }
-
-        private string Sanitize(string input)
-        {
-            if (string.IsNullOrEmpty(input))
-                return null;
-            return HttpUtility.HtmlDecode(input)
-                .ToLower()
-                .Replace("?",".?")
-                .Replace("\"", ".?")
-                .Replace(@"\", ".?")
-                .Replace(@"'", ".?")
-                .Replace("(", ".?")
-                .Replace(")", ".?")
-                .Replace("[", ".?")
-                .Replace("]", ".?")
-                .Replace("...", "…")
-                .Replace("`", ".?");
         }
 
         private void CreateANewOne(FileAnalysed fileAnalysed)
@@ -112,17 +78,19 @@ namespace Sciendo.MusicBrainz
         //MERGE(t)-[lr: HAVE_LOCAL]-(l:localTrack {name:'c:\\my path\\donna.mp3'})
         private bool LinkOneToExisting(FileAnalysed fileAnalysed)
         {
+            var sanitizedFileAnalysed = fileAnalysed.CreateNeo4JVersion();
+
             fileAnalysed.Neo4jApplyQuerries=new List<Neo4jApplyQuery>();
             fileAnalysed.Neo4jApplyQuerries.Add(new Neo4jApplyQuery
             {
                 ApplyStatus = ApplyStatus.None,
-                DebugQuery = DeleteLocalTrack(fileAnalysed).Query.DebugQueryText
+                DebugQuery = DeleteLocalTrack(sanitizedFileAnalysed).Query.DebugQueryText
             });
-            DeleteLocalTrack(fileAnalysed).ExecuteWithoutResults();
+            DeleteLocalTrack(sanitizedFileAnalysed).ExecuteWithoutResults();
 
             if (fileAnalysed.MarkedAsPartOfCollection)
             {
-                if(LinkOneToExisting(fileAnalysed, GetMatchInCollectionQuery))
+                if(LinkOneToExisting(fileAnalysed, sanitizedFileAnalysed, GetMatchInCollectionQuery))
                 {
                     if (ApplyProgress!=null)
                         ApplyProgress(this,new ApplyProgressEventArgs(fileAnalysed.FilePath,ApplyStatus.ApplyedToExistingInCollection));
@@ -137,7 +105,7 @@ namespace Sciendo.MusicBrainz
             }
             else
             {
-                if (LinkOneToExisting(fileAnalysed, GetMatchNotInCollectionQuery))
+                if (LinkOneToExisting(fileAnalysed, sanitizedFileAnalysed, GetMatchNotInCollectionQuery))
                 {
                     if(ApplyProgress!=null)
                         ApplyProgress(this,new ApplyProgressEventArgs(fileAnalysed.FilePath,ApplyStatus.ApplyedToExistingNotInCollection));
@@ -163,21 +131,17 @@ namespace Sciendo.MusicBrainz
                 .DetachDelete("l");
         }
 
-        private bool LinkOneToExisting(FileAnalysed fileAnalysed, Func<FileAnalysed,ICypherFluentQuery> getMatchQuery)
+        private bool LinkOneToExisting(FileAnalysed fileAnalysed, FileAnalysed sanitizedFileAnalyzed, Func<FileAnalysed,ICypherFluentQuery> getMatchQuery)
         {
             fileAnalysed.Neo4jApplyQuerries.Add(new Neo4jApplyQuery
             {
                 ApplyStatus = ApplyStatus.None,
-                DebugQuery = DeleteCurrentLocalTrack(fileAnalysed, getMatchQuery).Query.DebugQueryText
+                DebugQuery = DeleteCurrentLocalTrack(sanitizedFileAnalyzed, getMatchQuery).Query.DebugQueryText
             });
-            DeleteCurrentLocalTrack(fileAnalysed, getMatchQuery).ExecuteWithoutResults();
+            DeleteCurrentLocalTrack(sanitizedFileAnalyzed, getMatchQuery).ExecuteWithoutResults();
 
-            fileAnalysed.Neo4jApplyQuerries.Add(new Neo4jApplyQuery
-            {
-                ApplyStatus = ApplyStatus.None,
-                DebugQuery = UpdateLocalTrack(fileAnalysed, getMatchQuery).Query.DebugQueryText
-            });
-            var results = UpdateLocalTrack(fileAnalysed, getMatchQuery).Results.Count();
+            fileAnalysed.Neo4jApplyQuerries.Add( new Neo4jApplyQuery {ApplyStatus=ApplyStatus.None,DebugQuery = UpdateLocalTrack(fileAnalysed,getMatchQuery).Query.DebugQueryText});
+            var results = UpdateLocalTrack(sanitizedFileAnalyzed, getMatchQuery).Results.Count();
 
             return (results > 0);
         }
@@ -187,7 +151,7 @@ namespace Sciendo.MusicBrainz
             return getMatchQuery(fileAnalysed)
                 .With("t")
                 .Limit(1)
-                .Merge("(t)-[lr: HAVE_LOCAL]-(l:localTrack {name:'" + fileAnalysed.FilePath + "'})")
+                .Merge("(t)-[lr: HAVE_LOCAL]-(l:localTrack {name:\"" + fileAnalysed.FilePath + "\"})")
                 .Return(l => l.As<LocalTrack>());
         }
 
@@ -214,7 +178,7 @@ namespace Sciendo.MusicBrainz
 
         private FileAnalysed CheckInCollection(FileAnalysed fileAnalysed)
         {
-            var sanitizedFileAnalysed = Sanitize(fileAnalysed);
+            var sanitizedFileAnalysed = fileAnalysed.CreateNeo4JVersion();
             var query = GetMatchInCollectionQuery(sanitizedFileAnalysed)
                 .Return(t => t.As<MBEntry>()).Query;
             fileAnalysed.Neo4JMatchingQuery = query.DebugQueryText;
@@ -272,7 +236,7 @@ namespace Sciendo.MusicBrainz
         //limit 1
         private FileAnalysed CheckNotInCollection(FileAnalysed fileAnalysed)
         {
-            var sanitizedFileAnalysed = Sanitize(fileAnalysed);
+            var sanitizedFileAnalysed = fileAnalysed.CreateNeo4JVersion();
             var query = GetMatchNotInCollectionQuery(sanitizedFileAnalysed)
                 .Return(t => t.As<MBEntry>()).Query;
             fileAnalysed.Neo4JMatchingQuery = query.DebugQueryText;

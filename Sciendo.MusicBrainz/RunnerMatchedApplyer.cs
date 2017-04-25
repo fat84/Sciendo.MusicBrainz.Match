@@ -20,9 +20,8 @@ namespace Sciendo.MusicBrainz
         }
         public void Start()
         {
-            MatchedFiles = new List<FileAnalysed>();
-            var filesAnalysed = Serializer.DeserializeFromFile<FileAnalysed>(source);
-            musicBrainzAdapter.LinkToExisting(filesAnalysed);
+            MatchedFiles = Serializer.DeserializeFromFile<FileAnalysed>(source);
+            musicBrainzAdapter.LinkToExisting(MatchedFiles);
         }
 
         public List<FileAnalysed> MatchedFiles { get; private set; }
@@ -31,6 +30,20 @@ namespace Sciendo.MusicBrainz
         {
             musicBrainzAdapter.StopActivity = true;
         }
+
+        public void SaveTrace()
+        {
+            if (MatchedFiles != null && MatchedFiles.Any())
+            {
+                UpSertSave(source);
+            }
+        }
+
+        private void UpSertSave(string file)
+        {
+            Serializer.SerializeToFile(MatchedFiles, file);
+        }
+
 
     }
 }

@@ -12,7 +12,7 @@ namespace Sciendo.MusicBrainz
         public ApplyProgressEventArgs(string filePath, ApplyStatus applyStatus)
         {
             FilePath = filePath;
-            ApplyStatus = ApplyStatus;
+            ApplyStatus = applyStatus;
         }
     }
 }
