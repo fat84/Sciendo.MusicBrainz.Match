@@ -63,6 +63,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ApplyProgressEventArgs.cs" />
+    <Compile Include="ApplyType.cs" />
     <Compile Include="CheckMatchingProgressEventArgs.cs" />
     <Compile Include="Configuration\MusicBrainzConfigSection.cs" />
     <Compile Include="ExtensionMethods.cs" />

@@ -11,8 +11,9 @@ namespace Sciendo.MusicMatch.Contracts
         None,
         ApplyedToExistingInCollection,
         ApplyedToExistingNotInCollection,
-        CreatedAndApplyedInCollection,
-        CreatedAndApplyedNotInCollection,
-        ErrorApplying
+        ErrorApplying,
+        ApplyedToNewInCollection,
+        ApplyedToNewNotInCollection,
+        Ok
     }
 }

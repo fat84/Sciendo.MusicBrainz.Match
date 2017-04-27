@@ -11,20 +11,35 @@ namespace Sciendo.MusicBrainz
     public class RunnerMatchedApplyer
     {
         private readonly string source;
+        private readonly ApplyType _applyType;
         private readonly IMusicBrainzAdapter musicBrainzAdapter;
 
-        public RunnerMatchedApplyer(IMusicBrainzAdapter musicBrainzAdapter, string source)
+        public RunnerMatchedApplyer(IMusicBrainzAdapter musicBrainzAdapter, string source, ApplyType applyType)
         {
             this.source = source;
+            _applyType = applyType;
             this.musicBrainzAdapter = musicBrainzAdapter;
         }
         public void Start()
         {
-            MatchedFiles = Serializer.DeserializeFromFile<FileAnalysed>(source);
-            musicBrainzAdapter.LinkToExisting(MatchedFiles);
+            SetOfFiles = Serializer.DeserializeFromFile<FileAnalysed>(source);
+            switch (_applyType)
+            {
+                case ApplyType.Matched:
+                    musicBrainzAdapter.LinkToExisting(SetOfFiles,false);
+                    break;
+                case ApplyType.UnMatched:
+                    musicBrainzAdapter.CreateNew(SetOfFiles);
+                    break;
+                case ApplyType.All:
+                    musicBrainzAdapter.LinkToExisting(SetOfFiles,true);
+                    break;
+                default:
+                    return;
+            }
         }
 
-        public List<FileAnalysed> MatchedFiles { get; private set; }
+        public List<FileAnalysed> SetOfFiles { get; private set; }
 
         public void Stop()
         {
@@ -33,7 +48,7 @@ namespace Sciendo.MusicBrainz
 
         public void SaveTrace()
         {
-            if (MatchedFiles != null && MatchedFiles.Any())
+            if (SetOfFiles != null && SetOfFiles.Any())
             {
                 UpSertSave(source);
             }
@@ -41,7 +56,7 @@ namespace Sciendo.MusicBrainz
 
         private void UpSertSave(string file)
         {
-            Serializer.SerializeToFile(MatchedFiles, file);
+            Serializer.SerializeToFile(SetOfFiles, file);
         }
 
 

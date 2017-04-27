@@ -11,7 +11,7 @@ namespace Sciendo.MusicBrainz
 {
     public interface IMusicBrainzAdapter
     {
-        void LinkToExisting(IEnumerable<FileAnalysed> filesAnalysed);
+        void LinkToExisting(IEnumerable<FileAnalysed> filesAnalysed, bool forceCreate);
 
         void CreateNew(IEnumerable<FileAnalysed> filesAnalysed);
 

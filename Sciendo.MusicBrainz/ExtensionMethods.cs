@@ -10,7 +10,7 @@ namespace Sciendo.MusicBrainz
 {
     public static class ExtensionMethods
     {
-        public static FileAnalysed CreateNeo4JVersion(this FileAnalysed original)
+        public static FileAnalysed CreateNeo4JMatchingVersion(this FileAnalysed original)
         {
             return new FileAnalysed
             {
@@ -29,6 +29,26 @@ namespace Sciendo.MusicBrainz
             };
         }
 
+        public static FileAnalysed CreateNeo4JUpdatingVersion(this FileAnalysed original)
+        {
+            return new FileAnalysed
+            {
+                Album = HtmlDecode(original.Album),
+                AlbumArtist = HtmlDecode(original.AlbumArtist),
+                Artist = HtmlDecode(original.Artist),
+                FilePath = MiniSanitize(original.FilePath),
+                Title = HtmlDecode(original.Title),
+                Track = original.Track
+            };
+        }
+
+        private static string HtmlDecode(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+                return null;
+            var output = string.Copy(input);
+            return HttpUtility.HtmlDecode(output);
+        }
         private static string MiniSanitize(string input)
         {
             if (string.IsNullOrEmpty(input))

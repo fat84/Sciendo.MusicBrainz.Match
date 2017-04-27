@@ -15,112 +15,68 @@ namespace Sciendo.MusicBrainz
         {
             _graphClient = graphClient;
         }
-        public void LinkToExisting(IEnumerable<FileAnalysed> filesAnalysed)
+        public void LinkToExisting(IEnumerable<FileAnalysed> filesAnalysed, bool forceCreate)
         {
             if(filesAnalysed==null)
                 throw new ArgumentNullException(nameof(filesAnalysed));
 
             foreach (var fileAnalysed in filesAnalysed)
             {
-                if (!LinkOneToExisting(fileAnalysed))
-                    if(ApplyProgress!=null)
-                        ApplyProgress(this,new ApplyProgressEventArgs(fileAnalysed.FilePath,ApplyStatus.ErrorApplying));
-                    //CreateANewOne(sanitizedFileAnalysed);
+
+                var applyStatus = UpsertOneItem(fileAnalysed, fileAnalysed.CreateNeo4JMatchingVersion(),
+                    GetMatchInCollectionQuery,
+                    GetMatchNotInCollectionQuery, true);
+                if (forceCreate && applyStatus == ApplyStatus.ErrorApplying)
+                    UpsertOneItem(fileAnalysed, fileAnalysed.CreateNeo4JUpdatingVersion(), GetMergeInCollectionQuery,
+                        GetMergehNotInCollectionQuery, false);
             }
         }
 
-        private void CreateANewOne(FileAnalysed fileAnalysed)
+        private ApplyStatus UpsertOneItem(FileAnalysed fileAnalysed, FileAnalysed workVersion, 
+            Func<FileAnalysed,ICypherFluentQuery> getInCollectionQuery, 
+            Func<FileAnalysed,ICypherFluentQuery> getNotInCollectionQuery, 
+            bool deletePreviousLocalTrack=false )
         {
-            //there might be a multitude of reasons for which we are here
-            //Create the Artist if it doesn't exist
-            //merge (a:Artist{name:"Madonna1"}) return a
-            _graphClient.Cypher.Merge("(a:Artist{name:'" + fileAnalysed.Artist+ "'})").ExecuteWithoutResults();
-            //Create the Album structure and link it to the artist if it doesn't exist
-            //match (a:Artist{name:"Madonna1"}) 
-            //merge (a)-[r:CREDITED_AS{year:""}]-(b:ArtistCredit{name:"Madonna1"})-[c:CREDITED_ON]-(d:Album{name:"True Blue1"})-[e:PART_OF]-
-            //(f:Release{name:"True Blue1"})-[g:RELEASED_ON]-(h:Cd{position:"0"}) return a,r,b,c,d,e,f,g,h
-            _graphClient.Cypher.Match("(a:Artist{name:'" + fileAnalysed.Artist + "'})")
-                .Merge("(a)-[r:CREDITED_AS]-(b:ArtistCredit{name:'" + fileAnalysed.Artist +
-                       "'})-[c:CREDITED_ON]-(d:Album{name:'" + fileAnalysed.Album + "'})-[e:PART_OF]-(f:Release{name:'" +
-                       fileAnalysed.Album + "'})-[g:RELEASED_ON_MEDIUM]-(h:Cd{position:'0',name:'" + fileAnalysed.Album + "'})").ExecuteWithoutResults();
-            //Create the track if it doeesn't exist
-            //match (a:ArtistCredit{name:"Madonna1"})-[*..3]-(h:Cd{name:"True Blue1"})
-            //merge(h) < -[p: APPEARS_ON] - (t:Track{ name: "OPEN YOUR HEART1"})
-            //on create set t.mbid="myownid"
-            //return t
-            _graphClient.Cypher.Match("(a:ArtistCredit{name:'"+fileAnalysed.Artist+"'})-[*..3]-(h:Cd{name:'"+fileAnalysed.Album+"'})")
-                .Merge("(h) <-[p: APPEARS_ON]- (t:Track{ name: '"+fileAnalysed.Title+"'})")
-                .OnCreate()
-                .Set("t.mbid='"+ Guid.NewGuid().ToString() + "'")
-                .ExecuteWithoutResults();
-            //and finally this should never not exist but just in case
-            //add the localTrack
-            //-[lp: HAVE_LOCAL] - (l:localTrack{ name: "mypath/mypath/myfile1.mp3"}) return h,p,t, lp, l
-            _graphClient.Cypher.Match("(t:Track{name:'"+fileAnalysed.Title+"'})")
-                .Merge("(t)-[lp: HAVE_LOCAL]-(l:localTrack{ name: '" + fileAnalysed.FilePath + "'})")
-                .ExecuteWithoutResults();
-            
-        }
-
-        //for any album
-        //first check to see if the local path has not been already used and delete the old 
-        //localTrack. This assumes that the collection does not contain duplicate keys
-        //match(l:localTrack) where l.name="myfolderpath\\myfilepath.mp3" return l
-        //if not also check to see if the current track is not linked with other localTrack
-        //if found deleted
-        //mmatch (a:Album)-[r:PART_OF]-(b)-[r1:RELEASED_ON_MEDIUM]-(m:Cd)<-[*..3]-(ac:ArtistCredit) 
-        //where a.name=~"(?i)TRUE BLUE" and ac.name=~"(?i)Madonna" 
-        //with a, m, ac limit 1 match(m)<-[p: APPEARS_ON]-(t:Track)-[lp]-(l:localTrack) 
-        //where t.name=~"(?i)OPEN YOUR HEART" detach delete l
-        //after that go to create another one
-        //match(a:Album)-[r: PART_OF]-(b)-[r1: RELEASED_ON_MEDIUM]-(m:Cd)<-[*..3]-(ac:ArtistCredit) where a.name=~"(?i)10CC" and ac.name=~"(?i)10CC" 
-        //with a, m, ac limit 1 match(m)<-[p: APPEARS_ON]-(t:Track) where t.name=~"(?i)DONNA" 
-        //MERGE(t)-[lr: HAVE_LOCAL]-(l:localTrack {name:'c:\\my path\\donna.mp3'})
-        private bool LinkOneToExisting(FileAnalysed fileAnalysed)
-        {
-            var sanitizedFileAnalysed = fileAnalysed.CreateNeo4JVersion();
-
-            fileAnalysed.Neo4jApplyQuerries=new List<Neo4jApplyQuery>();
-            fileAnalysed.Neo4jApplyQuerries.Add(new Neo4jApplyQuery
+            fileAnalysed.Neo4jApplyQuerries = new List<Neo4jApplyQuery>();
+            if (deletePreviousLocalTrack)
             {
-                ApplyStatus = ApplyStatus.None,
-                DebugQuery = DeleteLocalTrack(sanitizedFileAnalysed).Query.DebugQueryText
-            });
-            DeleteLocalTrack(sanitizedFileAnalysed).ExecuteWithoutResults();
+                fileAnalysed.Neo4jApplyQuerries.Add(new Neo4jApplyQuery
+                {
+                    ApplyStatus = ApplyStatus.None,
+                    DebugQuery = DeleteLocalTrack(workVersion).Query.DebugQueryText
+                });
+                DeleteLocalTrack(workVersion).ExecuteWithoutResults();
+            }
 
+            var applyStatus = ApplyStatus.None;
             if (fileAnalysed.MarkedAsPartOfCollection)
             {
-                if(LinkOneToExisting(fileAnalysed, sanitizedFileAnalysed, GetMatchInCollectionQuery))
-                {
-                    if (ApplyProgress!=null)
-                        ApplyProgress(this,new ApplyProgressEventArgs(fileAnalysed.FilePath,ApplyStatus.ApplyedToExistingInCollection));
-                    return true;
-                }
-                else
-                {
-                    if(ApplyProgress!=null)
-                        ApplyProgress(this, new ApplyProgressEventArgs(fileAnalysed.FilePath,ApplyStatus.ErrorApplying));
-                    return false;
-                }
+                applyStatus = ApplyChanges(fileAnalysed, workVersion, getInCollectionQuery, deletePreviousLocalTrack);
+                if (ApplyProgress != null)
+                    ApplyProgress(this, new ApplyProgressEventArgs(fileAnalysed.FilePath, applyStatus));
+                return applyStatus;
             }
-            else
-            {
-                if (LinkOneToExisting(fileAnalysed, sanitizedFileAnalysed, GetMatchNotInCollectionQuery))
-                {
-                    if(ApplyProgress!=null)
-                        ApplyProgress(this,new ApplyProgressEventArgs(fileAnalysed.FilePath,ApplyStatus.ApplyedToExistingNotInCollection));
-                    return true;
-                }
-                else
-                {
-                    if (ApplyProgress != null)
-                    {
-                        ApplyProgress(this, new ApplyProgressEventArgs(fileAnalysed.FilePath,ApplyStatus.ErrorApplying));
-                    }
-                    return false;
-                }
-            }
+            applyStatus = ApplyChanges(fileAnalysed, workVersion, getNotInCollectionQuery,
+            deletePreviousLocalTrack);
+            if (ApplyProgress != null)
+                ApplyProgress(this, new ApplyProgressEventArgs(fileAnalysed.FilePath, applyStatus));
+            return applyStatus;
+        }
 
+        private ICypherFluentQuery GetMergehNotInCollectionQuery(FileAnalysed fileAnalysed)
+        {
+//            MERGE(ac: ArtistCredit{ name: "2 Fabiola"})-[:CREDITED_ON]->(a: Album{ name: "Evolution"})-[:PART_OF] - (b:Release{ name: "Evolution"})-[:RELEASED_ON_MEDIUM] - (m:Cd{ name: "Evolution"})-[:APPEARS_ON] - (t:Track{ name: "She's after My piano (remix '16)"})
+//with t
+//limit 1
+//MERGE(t) -[lr: HAVE_LOCAL] - (l:localTrack { name: "c:/users/octo/music/0-9/2 fabiola/evolution/01 - she's after my piano (remix '16).mp3"})
+//RETURN l
+                return _graphClient.Cypher.Merge(
+                    "(ac:ArtistCredit{name:\""+fileAnalysed.Artist+ "\"})-[:CREDITED_ON]->(a:Album{name:\"" + fileAnalysed.Album + "\"})-[:PART_OF]-(b:Release{name:\"" + fileAnalysed.Album + "\"})-[:RELEASED_ON_MEDIUM]-(m:Cd{name:\"" + fileAnalysed.Album + "\"})-[:APPEARS_ON]-(t:Track{name:\"" + fileAnalysed.Title + "\"})");
+        }
+
+        private ICypherFluentQuery GetMergeInCollectionQuery(FileAnalysed fileAnalysed)
+        {
+            throw new NotImplementedException();
         }
 
         private ICypherFluentQuery DeleteLocalTrack(FileAnalysed fileAnalysed)
@@ -131,24 +87,27 @@ namespace Sciendo.MusicBrainz
                 .DetachDelete("l");
         }
 
-        private bool LinkOneToExisting(FileAnalysed fileAnalysed, FileAnalysed sanitizedFileAnalyzed, Func<FileAnalysed,ICypherFluentQuery> getMatchQuery)
+        private ApplyStatus ApplyChanges(FileAnalysed fileAnalysed, FileAnalysed sanitizedFileAnalyzed, Func<FileAnalysed,ICypherFluentQuery> getQuery, bool deleteLocalTrackFirst=true)
         {
-            fileAnalysed.Neo4jApplyQuerries.Add(new Neo4jApplyQuery
+            if (deleteLocalTrackFirst)
             {
-                ApplyStatus = ApplyStatus.None,
-                DebugQuery = DeleteCurrentLocalTrack(sanitizedFileAnalyzed, getMatchQuery).Query.DebugQueryText
-            });
-            DeleteCurrentLocalTrack(sanitizedFileAnalyzed, getMatchQuery).ExecuteWithoutResults();
+                fileAnalysed.Neo4jApplyQuerries.Add(new Neo4jApplyQuery
+                {
+                    ApplyStatus = ApplyStatus.None,
+                    DebugQuery = DeleteCurrentLocalTrack(sanitizedFileAnalyzed, getQuery).Query.DebugQueryText
+                });
+                DeleteCurrentLocalTrack(sanitizedFileAnalyzed, getQuery).ExecuteWithoutResults();
+            }
 
-            fileAnalysed.Neo4jApplyQuerries.Add( new Neo4jApplyQuery {ApplyStatus=ApplyStatus.None,DebugQuery = UpdateLocalTrack(fileAnalysed,getMatchQuery).Query.DebugQueryText});
-            var results = UpdateLocalTrack(sanitizedFileAnalyzed, getMatchQuery).Results.Count();
+            fileAnalysed.Neo4jApplyQuerries.Add( new Neo4jApplyQuery {ApplyStatus=ApplyStatus.None,DebugQuery = UpdateLocalTrack(sanitizedFileAnalyzed,getQuery).Query.DebugQueryText});
+            var results = UpdateLocalTrack(sanitizedFileAnalyzed, getQuery).Results.Count();
 
-            return (results > 0);
+            return (results > 0)?ApplyStatus.Ok:ApplyStatus.ErrorApplying;
         }
 
-        private static ICypherFluentQuery<LocalTrack> UpdateLocalTrack(FileAnalysed fileAnalysed, Func<FileAnalysed, ICypherFluentQuery> getMatchQuery)
+        private static ICypherFluentQuery<LocalTrack> UpdateLocalTrack(FileAnalysed fileAnalysed, Func<FileAnalysed, ICypherFluentQuery> getQuery)
         {
-            return getMatchQuery(fileAnalysed)
+            return getQuery(fileAnalysed)
                 .With("t")
                 .Limit(1)
                 .Merge("(t)-[lr: HAVE_LOCAL]-(l:localTrack {name:\"" + fileAnalysed.FilePath + "\"})")
@@ -164,9 +123,16 @@ namespace Sciendo.MusicBrainz
                 .DetachDelete("l");
         }
 
-        public void CreateNew(IEnumerable<FileAnalysed> fileAnalysed)
+        public void CreateNew(IEnumerable<FileAnalysed> filesAnalysed)
         {
-            throw new NotImplementedException();
+            if (filesAnalysed == null)
+                throw new ArgumentNullException(nameof(filesAnalysed));
+
+            foreach (var fileAnalysed in filesAnalysed)
+            {
+                UpsertOneItem(fileAnalysed, fileAnalysed.CreateNeo4JUpdatingVersion(), GetMergeInCollectionQuery,
+                    GetMergehNotInCollectionQuery, false);
+            }
         }
 
         public FileAnalysed Check(FileAnalysed fileAnalysed)
@@ -178,7 +144,7 @@ namespace Sciendo.MusicBrainz
 
         private FileAnalysed CheckInCollection(FileAnalysed fileAnalysed)
         {
-            var sanitizedFileAnalysed = fileAnalysed.CreateNeo4JVersion();
+            var sanitizedFileAnalysed = fileAnalysed.CreateNeo4JMatchingVersion();
             var query = GetMatchInCollectionQuery(sanitizedFileAnalysed)
                 .Return(t => t.As<MBEntry>()).Query;
             fileAnalysed.Neo4JMatchingQuery = query.DebugQueryText;
@@ -236,7 +202,7 @@ namespace Sciendo.MusicBrainz
         //limit 1
         private FileAnalysed CheckNotInCollection(FileAnalysed fileAnalysed)
         {
-            var sanitizedFileAnalysed = fileAnalysed.CreateNeo4JVersion();
+            var sanitizedFileAnalysed = fileAnalysed.CreateNeo4JMatchingVersion();
             var query = GetMatchNotInCollectionQuery(sanitizedFileAnalysed)
                 .Return(t => t.As<MBEntry>()).Query;
             fileAnalysed.Neo4JMatchingQuery = query.DebugQueryText;
