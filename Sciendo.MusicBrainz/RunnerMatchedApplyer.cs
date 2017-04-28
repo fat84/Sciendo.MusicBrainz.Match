@@ -12,12 +12,14 @@ namespace Sciendo.MusicBrainz
     {
         private readonly string source;
         private readonly ApplyType _applyType;
+        private readonly bool _testOnly;
         private readonly IMusicBrainzAdapter musicBrainzAdapter;
 
-        public RunnerMatchedApplyer(IMusicBrainzAdapter musicBrainzAdapter, string source, ApplyType applyType)
+        public RunnerMatchedApplyer(IMusicBrainzAdapter musicBrainzAdapter, string source, ApplyType applyType, bool testOnly)
         {
             this.source = source;
             _applyType = applyType;
+            _testOnly = testOnly;
             this.musicBrainzAdapter = musicBrainzAdapter;
         }
         public void Start()
@@ -26,13 +28,13 @@ namespace Sciendo.MusicBrainz
             switch (_applyType)
             {
                 case ApplyType.Matched:
-                    musicBrainzAdapter.LinkToExisting(SetOfFiles,false);
+                    musicBrainzAdapter.LinkToExisting(SetOfFiles,false,_testOnly);
                     break;
                 case ApplyType.UnMatched:
-                    musicBrainzAdapter.CreateNew(SetOfFiles);
+                    musicBrainzAdapter.CreateNew(SetOfFiles,_testOnly);
                     break;
                 case ApplyType.All:
-                    musicBrainzAdapter.LinkToExisting(SetOfFiles,true);
+                    musicBrainzAdapter.LinkToExisting(SetOfFiles,true,_testOnly);
                     break;
                 default:
                     return;

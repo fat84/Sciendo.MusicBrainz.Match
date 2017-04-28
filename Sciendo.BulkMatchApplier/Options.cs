@@ -16,6 +16,9 @@ namespace Sciendo.BulkMatchApplier
         [Option('a', "applytype", DefaultValue = MusicBrainz.ApplyType.Matched, Required = true, HelpText = "depends on the data in the source file. if the source file is a matched one it should be Matched, if the source file is an unmatched file it should be UnMatched, it should also accept a file produced by the bulkfile.analyser in which case it should be All.")]
         public ApplyType ApplyType { get; set; }
 
+        [Option('t', "testOnly", DefaultValue = true, Required = true, HelpText = "if true it just records actions to be done, if false records and performs actions.")]
+        public bool TestOnly { get; set; }
+
         public string GetHelpText()
         {
             return CommandLine.Text.HelpText.AutoBuild(this).ToString();

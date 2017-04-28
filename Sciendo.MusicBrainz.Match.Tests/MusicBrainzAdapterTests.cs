@@ -37,7 +37,7 @@ namespace Sciendo.MusicBrainz.Match.Tests
                     FilePath = @"0-9\65 days of static\The Fall Of Math\65daysofstatic-another-code-against-the-gone.mp3",
                     Title = "another code against the gone"
                 }
-            },false);
+            },false,true);
 
         }
         [Test]
@@ -59,7 +59,7 @@ namespace Sciendo.MusicBrainz.Match.Tests
                     FilePath = @"mycollection\folderpath\myfilepath.mp3",
                     Title = "My New Song1"
                 }
-            },false);
+            },false,true);
 
         }
     }

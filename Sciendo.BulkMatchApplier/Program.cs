@@ -25,7 +25,7 @@ namespace Sciendo.BulkMatchApplier
                 client.Connect();
                 MusicBrainzAdapter musicBrainzAdapter = new MusicBrainzAdapter(client);
                 musicBrainzAdapter.ApplyProgress += MusicBrainzAdapter_ApplyProgress;
-                var runner = new RunnerMatchedApplyer(musicBrainzAdapter, options.Source, options.ApplyType);
+                var runner = new RunnerMatchedApplyer(musicBrainzAdapter, options.Source, options.ApplyType, options.TestOnly);
                 var cancellationTokenSource = new CancellationTokenSource();
                 var cancellationToken = cancellationTokenSource.Token;
                 cancellationToken.Register(runner.Stop);
