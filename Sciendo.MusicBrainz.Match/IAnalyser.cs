@@ -7,7 +7,7 @@ namespace Sciendo.FilesAnalyser
 {
     public interface IAnalyser
     {
-        FileAnalysed AnalyseFile(string filePath);
+        Music AnalyseFile(string filePath);
         
         string[] CollectionPaths { get; }
 

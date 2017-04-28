@@ -14,7 +14,7 @@ namespace Sciendo.FilesAnalyser
         private readonly string[] _extensions;
         private readonly IAnalyser _analyser;
         private readonly string _outputFilePath;
-        private List<FileAnalysed> _filesAnalysed;
+        private List<Music> _filesAnalysed;
         private bool _fileSystemStopped=false;
         private bool _analyserStopped = false;
         private static long _counter;
@@ -36,7 +36,7 @@ namespace Sciendo.FilesAnalyser
             _extensions = extensions;
             _analyser = analyser;
             _outputFilePath = outputFilePath;
-            _filesAnalysed=new List<FileAnalysed>();
+            _filesAnalysed=new List<Music>();
         }
         public virtual void Initialize()
         {
@@ -59,7 +59,7 @@ namespace Sciendo.FilesAnalyser
             _filesAnalysed.AddRange(RunDirectory(_path));
         }
 
-        private IEnumerable<FileAnalysed> RunDirectory(string path)
+        private IEnumerable<Music> RunDirectory(string path)
         {
             var previousArtist = string.Empty;
             var files = _fileSystem.GetFiles(path, _extensions);
@@ -71,12 +71,13 @@ namespace Sciendo.FilesAnalyser
                     break;
                 }
                 var fileAnalysed = _analyser.AnalyseFile(file);
-                if (!string.IsNullOrEmpty(previousArtist) && fileAnalysed.Id3TagIncomplete &&
-                    previousArtist != fileAnalysed.Artist)
+                if (!string.IsNullOrEmpty(previousArtist) && fileAnalysed.TagAnalysis.Id3TagIncomplete &&
+                    previousArtist != fileAnalysed.Artist.Name)
                 {
-                    fileAnalysed.PossiblePartOfACollection = true;
+                    fileAnalysed.TagAnalysis.PossiblePartOfACollection = true;
                 }
                 fileAnalysed.Id = _counter++;
+                previousArtist = fileAnalysed.Artist.Name;
                 yield return fileAnalysed;
             }
         }
@@ -88,6 +89,6 @@ namespace Sciendo.FilesAnalyser
             Serializer.SerializeToFile(_filesAnalysed, _outputFilePath);
         }
 
-        public List<FileAnalysed> FilesAnalysed { get {return _filesAnalysed;} }
+        public List<Music> FilesAnalysed { get {return _filesAnalysed;} }
     }
 }

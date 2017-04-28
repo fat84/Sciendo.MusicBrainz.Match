@@ -70,8 +70,8 @@ namespace Sciendo.MusicBrainz.Match.Tests
             mockFileSystem.Expect(m => m.ReadTagFromFile("file1.mp3")).Return(new Tag());
             mockFileSystem.Expect(m => m.ReadTagFromFile("file2.mp3")).Return(new Tag());
 
-            mockAnalyser.Expect(m => m.AnalyseFile("file1.mp3")).Return(new FileAnalysed()).IgnoreArguments();
-            mockAnalyser.Expect(m => m.AnalyseFile("file2.mp3")).Return(new FileAnalysed()).IgnoreArguments();
+            mockAnalyser.Expect(m => m.AnalyseFile("file1.mp3")).Return(new Music()).IgnoreArguments();
+            mockAnalyser.Expect(m => m.AnalyseFile("file2.mp3")).Return(new Music()).IgnoreArguments();
             var runner = new Sciendo.FilesAnalyser.Runner(mockFileSystem, "..", new[] { ".mp3" }, mockAnalyser);
             runner.Start();
             Assert.IsNotNull(runner.FilesAnalysed);

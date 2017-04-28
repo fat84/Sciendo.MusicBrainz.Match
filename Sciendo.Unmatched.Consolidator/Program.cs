@@ -15,11 +15,11 @@ namespace Sciendo.Unmatched.Consolidator
             var options = new Options();
             if (CommandLine.Parser.Default.ParseArguments(args, options))
             {
-                var filesAnalysed = Serializer.DeserializeFromFile<FileAnalysed>(options.Source);
+                var filesAnalysed = Serializer.DeserializeFromFile<Music>(options.Source);
 
                 var suggestions =
                     filesAnalysed.Where(f => f.FixSuggestion.ToLower() != "no suggestion")
-                        .Select(f => new FileAnalysedConsolidated { FilePath = f.FilePath, FixSuggestion = f.FixSuggestion }).ToList();
+                        .Select(f => new MusicBase { FilePath = f.FilePath, FixSuggestion = f.FixSuggestion }).ToList();
                 Serializer.SerializeToFile(suggestions, options.Output);
                 return;
             }

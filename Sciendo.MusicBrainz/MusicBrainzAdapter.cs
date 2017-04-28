@@ -15,7 +15,7 @@ namespace Sciendo.MusicBrainz
         {
             _graphClient = graphClient;
         }
-        public void LinkToExisting(IEnumerable<FileAnalysed> filesAnalysed, bool forceCreate, bool testOnly)
+        public void LinkToExisting(IEnumerable<Music> filesAnalysed, bool forceCreate, bool testOnly)
         {
             if(filesAnalysed==null)
                 throw new ArgumentNullException(nameof(filesAnalysed));
@@ -32,16 +32,16 @@ namespace Sciendo.MusicBrainz
             }
         }
 
-        private ApplyStatus UpsertOneItem(FileAnalysed fileAnalysed, FileAnalysed workVersion, 
-            Func<FileAnalysed,ICypherFluentQuery> getInCollectionQuery, 
-            Func<FileAnalysed,ICypherFluentQuery> getNotInCollectionQuery, 
+        private ApplyStatus UpsertOneItem(Music fileAnalysed, Music workVersion, 
+            Func<Music,ICypherFluentQuery> getInCollectionQuery, 
+            Func<Music,ICypherFluentQuery> getNotInCollectionQuery, 
             bool testOnly,
             bool deletePreviousLocalTrack=false )
         {
-            fileAnalysed.Neo4jApplyQuerries = new List<Neo4jApplyQuery>();
+            fileAnalysed.Neo4jApplyQuerries = new List<Neo4jQuery>();
             if (deletePreviousLocalTrack)
             {
-                fileAnalysed.Neo4jApplyQuerries.Add(new Neo4jApplyQuery
+                fileAnalysed.Neo4jApplyQuerries.Add(new Neo4jQuery
                 {
                     ApplyStatus = ApplyStatus.None,
                     DebugQuery = DeleteLocalTrack(workVersion).Query.DebugQueryText
@@ -65,7 +65,7 @@ namespace Sciendo.MusicBrainz
             return applyStatus;
         }
 
-        private ICypherFluentQuery GetMergehNotInCollectionQuery(FileAnalysed fileAnalysed)
+        private ICypherFluentQuery GetMergehNotInCollectionQuery(Music fileAnalysed)
         {
 //            MERGE(ac: ArtistCredit{ name: "2 Fabiola"})-[:CREDITED_ON]->(a: Album{ name: "Evolution"})-[:PART_OF] - (b:Release{ name: "Evolution"})-[:RELEASED_ON_MEDIUM] - (m:Cd{ name: "Evolution"})-[:APPEARS_ON] - (t:Track{ name: "She's after My piano (remix '16)"})
 //with t
@@ -77,12 +77,12 @@ namespace Sciendo.MusicBrainz
                     .OnCreate().Set("t.mbid=\""+Guid.NewGuid()+"\"");
         }
 
-        private ICypherFluentQuery GetMergeInCollectionQuery(FileAnalysed fileAnalysed)
+        private ICypherFluentQuery GetMergeInCollectionQuery(Music fileAnalysed)
         {
             throw new NotImplementedException();
         }
 
-        private ICypherFluentQuery DeleteLocalTrack(FileAnalysed fileAnalysed)
+        private ICypherFluentQuery DeleteLocalTrack(Music fileAnalysed)
         {
             return _graphClient.Cypher.Match("(l:localTrack)")
                 .Where("l.name={filePath}")
@@ -90,11 +90,11 @@ namespace Sciendo.MusicBrainz
                 .DetachDelete("l");
         }
 
-        private ApplyStatus ApplyChanges(FileAnalysed fileAnalysed, FileAnalysed sanitizedFileAnalyzed, Func<FileAnalysed,ICypherFluentQuery> getQuery, bool deleteLocalTrackFirst, bool testOnly)
+        private ApplyStatus ApplyChanges(Music fileAnalysed, Music sanitizedFileAnalyzed, Func<Music,ICypherFluentQuery> getQuery, bool deleteLocalTrackFirst, bool testOnly)
         {
             if (deleteLocalTrackFirst)
             {
-                fileAnalysed.Neo4jApplyQuerries.Add(new Neo4jApplyQuery
+                fileAnalysed.Neo4jApplyQuerries.Add(new Neo4jQuery
                 {
                     ApplyStatus = ApplyStatus.None,
                     DebugQuery = DeleteCurrentLocalTrack(sanitizedFileAnalyzed, getQuery).Query.DebugQueryText
@@ -103,13 +103,13 @@ namespace Sciendo.MusicBrainz
                     DeleteCurrentLocalTrack(sanitizedFileAnalyzed, getQuery).ExecuteWithoutResults();
             }
 
-            fileAnalysed.Neo4jApplyQuerries.Add( new Neo4jApplyQuery {ApplyStatus=ApplyStatus.None,DebugQuery = UpdateLocalTrack(sanitizedFileAnalyzed,getQuery).Query.DebugQueryText});
+            fileAnalysed.Neo4jApplyQuerries.Add( new Neo4jQuery {ApplyStatus=ApplyStatus.None,DebugQuery = UpdateLocalTrack(sanitizedFileAnalyzed,getQuery).Query.DebugQueryText});
             if (!testOnly)
                 return (UpdateLocalTrack(sanitizedFileAnalyzed, getQuery).Results.Any())?ApplyStatus.Ok:ApplyStatus.ErrorApplying;
             return ApplyStatus.None;
         }
 
-        private static ICypherFluentQuery<LocalTrack> UpdateLocalTrack(FileAnalysed fileAnalysed, Func<FileAnalysed, ICypherFluentQuery> getQuery)
+        private static ICypherFluentQuery<LocalTrack> UpdateLocalTrack(Music fileAnalysed, Func<Music, ICypherFluentQuery> getQuery)
         {
             return getQuery(fileAnalysed)
                 .With("t")
@@ -118,7 +118,7 @@ namespace Sciendo.MusicBrainz
                 .Return(l => l.As<LocalTrack>());
         }
 
-        private static ICypherFluentQuery DeleteCurrentLocalTrack(FileAnalysed fileAnalysed, Func<FileAnalysed, ICypherFluentQuery> getMatchQuery)
+        private static ICypherFluentQuery DeleteCurrentLocalTrack(Music fileAnalysed, Func<Music, ICypherFluentQuery> getMatchQuery)
         {
             return getMatchQuery(fileAnalysed)
                 .With("t")
@@ -127,7 +127,7 @@ namespace Sciendo.MusicBrainz
                 .DetachDelete("l");
         }
 
-        public void CreateNew(IEnumerable<FileAnalysed> filesAnalysed, bool testOnly)
+        public void CreateNew(IEnumerable<Music> filesAnalysed, bool testOnly)
         {
             if (filesAnalysed == null)
                 throw new ArgumentNullException(nameof(filesAnalysed));
@@ -139,14 +139,14 @@ namespace Sciendo.MusicBrainz
             }
         }
 
-        public FileAnalysed Check(FileAnalysed fileAnalysed)
+        public Music Check(Music fileAnalysed)
         {
             return (fileAnalysed.MarkedAsPartOfCollection)
                 ? CheckInCollection(fileAnalysed)
                 : CheckNotInCollection(fileAnalysed);
         }
 
-        private FileAnalysed CheckInCollection(FileAnalysed fileAnalysed)
+        private Music CheckInCollection(Music fileAnalysed)
         {
             var sanitizedFileAnalysed = fileAnalysed.CreateNeo4JMatchingVersion();
             var query = GetMatchInCollectionQuery(sanitizedFileAnalysed)
@@ -183,7 +183,7 @@ namespace Sciendo.MusicBrainz
             return fileAnalysed;
         }
 
-        private ICypherFluentQuery GetMatchInCollectionQuery(FileAnalysed sanitizedFileAnalysed)
+        private ICypherFluentQuery GetMatchInCollectionQuery(Music sanitizedFileAnalysed)
         {
             return _graphClient.Cypher.Match(
                     "(ac:ArtistCredit)-[:CREDITED_ON]->(a:Album)-[:PART_OF]-(b)-[:RELEASED_ON_MEDIUM]-(m)-[:APPEARS_ON]-(t:Track)-[:CREDITED_ON]-(tac:ArtistCredit)")
@@ -204,7 +204,7 @@ namespace Sciendo.MusicBrainz
         //and ac.name=~"(?ui).*Madonna.*"//
         //Return t.mbid
         //limit 1
-        private FileAnalysed CheckNotInCollection(FileAnalysed fileAnalysed)
+        private Music CheckNotInCollection(Music fileAnalysed)
         {
             var sanitizedFileAnalysed = fileAnalysed.CreateNeo4JMatchingVersion();
             var query = GetMatchNotInCollectionQuery(sanitizedFileAnalysed)
@@ -241,7 +241,7 @@ namespace Sciendo.MusicBrainz
             return fileAnalysed;
         }
 
-        private ICypherFluentQuery GetMatchNotInCollectionQuery(FileAnalysed sanitizedFileAnalysed)
+        private ICypherFluentQuery GetMatchNotInCollectionQuery(Music sanitizedFileAnalysed)
         {
             return _graphClient.Cypher.Match(
                     "(ac:ArtistCredit)-[:CREDITED_ON]->(a:Album)-[:PART_OF]-(b)-[:RELEASED_ON_MEDIUM]-(m)-[:APPEARS_ON]-(t:Track)")
@@ -253,7 +253,7 @@ namespace Sciendo.MusicBrainz
                 .WithParam("artistName", "(?ui).*" + sanitizedFileAnalysed.Artist + ".*");
         }
 
-        public IEnumerable<FileAnalysed> CheckBulk(IEnumerable<FileAnalysed> filesAnalysed)
+        public IEnumerable<Music> CheckBulk(IEnumerable<Music> filesAnalysed)
         {
             foreach (var fileAnalysed in filesAnalysed)
             {

@@ -24,7 +24,7 @@ namespace Sciendo.MusicBrainz
         }
         public void Start()
         {
-            SetOfFiles = Serializer.DeserializeFromFile<FileAnalysed>(source);
+            SetOfFiles = Serializer.DeserializeFromFile<Music>(source);
             switch (_applyType)
             {
                 case ApplyType.Matched:
@@ -41,7 +41,7 @@ namespace Sciendo.MusicBrainz
             }
         }
 
-        public List<FileAnalysed> SetOfFiles { get; private set; }
+        public List<Music> SetOfFiles { get; private set; }
 
         public void Stop()
         {

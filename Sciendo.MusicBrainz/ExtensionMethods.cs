@@ -10,7 +10,7 @@ namespace Sciendo.MusicBrainz
 {
     public static class ExtensionMethods
     {
-        public static FileAnalysed CreateNeo4JMatchingVersion(this FileAnalysed original)
+        public static Music CreateNeo4JMatchingVersion(this Music original)
         {
             return new FileAnalysed
             {
@@ -29,9 +29,9 @@ namespace Sciendo.MusicBrainz
             };
         }
 
-        public static FileAnalysed CreateNeo4JUpdatingVersion(this FileAnalysed original)
+        public static Music CreateNeo4JUpdatingVersion(this Music original)
         {
-            return new FileAnalysed
+            return new Music
             {
                 Album = HtmlDecode(original.Album),
                 AlbumArtist = HtmlDecode(original.AlbumArtist),

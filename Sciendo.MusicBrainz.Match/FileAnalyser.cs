@@ -29,7 +29,7 @@ namespace Sciendo.FilesAnalyser
             StopActivity = false;
         }
 
-        public FileAnalysed AnalyseFile(string filePath)
+        public Music AnalyseFile(string filePath)
         {
             if (string.IsNullOrEmpty(filePath))
                 throw new ArgumentNullException(nameof(filePath));
@@ -39,8 +39,15 @@ namespace Sciendo.FilesAnalyser
                 AnalyserProgress(this,new AnalyserProgressEventArgs(filePath));
 
             var tag = _fileSystem.ReadTagFromFile(filePath);
-            if (tag==null || tag.IsEmpty)
-                return new FileAnalysed { Artist = null, Album=null,Title=null, FilePath = filePath, Id3TagIncomplete=true };
+            if (tag == null || tag.IsEmpty)
+                return new Music
+                {
+                    Artist = null,
+                    Album = null,
+                    Title = null,
+                    FilePath = filePath,
+                    TagAnalysis = new TagAnalysis {Id3TagIncomplete = true}
+                };
             bool isPartOfCollection = false;
             if (tag.AlbumArtists == null || tag.Artists==null || !tag.AlbumArtists.Any() || !tag.Artists.Any())
                 isPartOfCollection = false;
@@ -51,18 +58,18 @@ namespace Sciendo.FilesAnalyser
                                      tag.AlbumArtists.FirstOrDefault() == _collectionMarker;
             }
             var tagComplete = ValidateTag(tag);
-            return new FileAnalysed
+            return new Music
             {
-                Artist = (tag.Artists==null )?null: tag.Artists.FirstOrDefault().CleanString(),
-                Album=(tag.Album==null) ?null :tag.Album.CleanString(),
-                Title=(tag.Title==null)?null:tag.Title.CleanString(),
+                Artist = (tag.Performers==null )?new Item(): new Item {Name= tag.Performers.FirstOrDefault(p=>p!=_collectionMarker).CleanString()},
+                Album=(tag.Album==null) ?new Item() : new Item {Name= tag.Album.CleanString()},
+                Title=(tag.Title==null)?new Item(): new Item {Name= tag.Title.CleanString()},
                 Track=tag.Track,
                 FilePath = filePath,
+                TagAnalysis = new TagAnalysis { 
                 InCollectionPath = _collectionPaths.Any(c => filePath.ToLower().Contains(c.ToLower())),
                 MarkedAsPartOfCollection=isPartOfCollection,
-                Id3TagIncomplete=!tagComplete,
-                AlbumArtist= (isPartOfCollection)?_collectionMarker:String.Empty
-
+                Id3TagIncomplete=!tagComplete},
+                AlbumArtist= (isPartOfCollection)?new Item {Name= _collectionMarker}:new Item()
             };
         }
 

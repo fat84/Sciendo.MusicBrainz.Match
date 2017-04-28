@@ -11,13 +11,13 @@ namespace Sciendo.MusicBrainz
 {
     public interface IMusicBrainzAdapter
     {
-        void LinkToExisting(IEnumerable<FileAnalysed> filesAnalysed, bool forceCreate, bool testOnly);
+        void LinkToExisting(IEnumerable<Music> filesAnalysed, bool forceCreate, bool testOnly);
 
-        void CreateNew(IEnumerable<FileAnalysed> filesAnalysed, bool testOnly);
+        void CreateNew(IEnumerable<Music> filesAnalysed, bool testOnly);
 
-        FileAnalysed Check(FileAnalysed fileAnalysed);
+        Music Check(Music fileAnalysed);
         
-        IEnumerable<FileAnalysed> CheckBulk(IEnumerable<FileAnalysed> filesAnalysed);
+        IEnumerable<Music> CheckBulk(IEnumerable<Music> filesAnalysed);
 
         event EventHandler<CheckMatchingProgressEventArgs> CheckMatchingProgress;
 

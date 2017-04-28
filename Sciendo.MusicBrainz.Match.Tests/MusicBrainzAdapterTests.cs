@@ -28,9 +28,9 @@ namespace Sciendo.MusicBrainz.Match.Tests
         {
             MusicBrainzAdapter musicBrainzAdapter=new MusicBrainzAdapter(_client);
 
-            musicBrainzAdapter.LinkToExisting(new FileAnalysed[]
+            musicBrainzAdapter.LinkToExisting(new Music[]
             {
-                new FileAnalysed
+                new Music
                 {
                     Artist = "65daysofstatic",
                     Album = "The Fall Of Math",
@@ -50,9 +50,9 @@ namespace Sciendo.MusicBrainz.Match.Tests
 
             MusicBrainzAdapter musicBrainzAdapter = new MusicBrainzAdapter(_client);
 
-            musicBrainzAdapter.LinkToExisting(new FileAnalysed[]
+            musicBrainzAdapter.LinkToExisting(new Music[]
             {
-                new FileAnalysed
+                new Music
                 {
                     Artist = "My New Artist1",
                     Album = "My New Album1",

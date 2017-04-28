@@ -36,8 +36,8 @@ namespace Sciendo.MusicBrainz
 
         public void Start()
         {
-            AllResults=new List<FileAnalysed>();
-            var filesAnalysed = Serializer.DeserializeFromFile<FileAnalysed>(source);
+            AllResults=new List<Music>();
+            var filesAnalysed = Serializer.DeserializeFromFile<Music>(source);
             var startId = (_append)?GetStartId():0;
             AllResults = musicBrainzAdapter.CheckBulk(filesAnalysed.Where(f=>f.Id>=startId)).ToList();
         }
@@ -56,12 +56,12 @@ namespace Sciendo.MusicBrainz
             long startId = 0;
             if (File.Exists(file))
             {
-                startId = Serializer.DeserializeFromFile<FileAnalysed>(file).Max(f => f.Id) +1;
+                startId = Serializer.DeserializeFromFile<Music>(file).Max(f => f.Id) +1;
             }
             return startId;
         }
 
-        public List<FileAnalysed> AllResults { get; set; }
+        public List<Music> AllResults { get; set; }
 
         public void Stop()
         {
@@ -69,13 +69,13 @@ namespace Sciendo.MusicBrainz
         }
 
         
-        public List<FileAnalysed> FilesAnalysed { get; }
+        public List<Music> FilesAnalysed { get; }
 
-        private void UpSertSave(string file, Func<FileAnalysed, bool> predicate=null)
+        private void UpSertSave(string file, Func<Music, bool> predicate=null)
         {
             if (_append)
             {
-                var existingResults = Serializer.DeserializeFromFile<FileAnalysed>(file);
+                var existingResults = Serializer.DeserializeFromFile<Music>(file);
                 if (existingResults != null)
                     AllResults.AddRange(existingResults);
             }
@@ -92,14 +92,14 @@ namespace Sciendo.MusicBrainz
             if (AllResults != null && AllResults.Any())
                 if (string.IsNullOrEmpty(unMatched))
                 {
-                    UpSertSave(matched,(FileAnalysed f)=> { return f.MatchStatus != MatchStatus.ErrorMatching; });
-                    UpSertSave(matchingErrors, (FileAnalysed f) => { return f.MatchStatus == MatchStatus.ErrorMatching; });
+                    UpSertSave(matched,(Music f)=> { return f.MatchStatus != MatchStatus.ErrorMatching; });
+                    UpSertSave(matchingErrors, (Music f) => { return f.MatchStatus == MatchStatus.ErrorMatching; });
                 }
                 else
                 {
-                    UpSertSave(matched,(FileAnalysed f)=> { return f.MatchStatus==MatchStatus.Matched; });
-                    UpSertSave(unMatched, (FileAnalysed f) => { return f.MatchStatus==MatchStatus.UnMatched; });
-                    UpSertSave(matchingErrors, (FileAnalysed f) => { return f.MatchStatus == MatchStatus.ErrorMatching; });
+                    UpSertSave(matched,(Music f)=> { return f.MatchStatus==MatchStatus.Matched; });
+                    UpSertSave(unMatched, (Music f) => { return f.MatchStatus==MatchStatus.UnMatched; });
+                    UpSertSave(matchingErrors, (Music f) => { return f.MatchStatus == MatchStatus.ErrorMatching; });
                 }
         }
     }
