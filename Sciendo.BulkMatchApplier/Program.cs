@@ -45,10 +45,10 @@ namespace Sciendo.BulkMatchApplier
             var previous = Console.ForegroundColor;
             switch (e.ApplyStatus)
             {
-                case ApplyStatus.ErrorApplying:
+                case ExecutionStatus.ExecutionError:
                     Console.ForegroundColor = ConsoleColor.Red;
                     break;
-                case ApplyStatus.None:
+                case ExecutionStatus.NotExecuted:
                     Console.ForegroundColor = ConsoleColor.DarkYellow;
                     break;
                 default:

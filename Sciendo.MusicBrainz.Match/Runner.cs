@@ -71,13 +71,13 @@ namespace Sciendo.FilesAnalyser
                     break;
                 }
                 var fileAnalysed = _analyser.AnalyseFile(file);
-                if (!string.IsNullOrEmpty(previousArtist) && fileAnalysed.TagAnalysis.Id3TagIncomplete &&
+                if (!string.IsNullOrEmpty(previousArtist) && !fileAnalysed.TagAnalysis.Id3TagIncomplete &&
                     previousArtist != fileAnalysed.Artist.Name)
                 {
                     fileAnalysed.TagAnalysis.PossiblePartOfACollection = true;
                 }
                 fileAnalysed.Id = _counter++;
-                previousArtist = fileAnalysed.Artist.Name;
+                previousArtist = (fileAnalysed.TagAnalysis.Id3TagIncomplete)? string.Empty:fileAnalysed.Artist.Name;
                 yield return fileAnalysed;
             }
         }

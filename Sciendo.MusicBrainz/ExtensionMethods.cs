@@ -10,35 +10,27 @@ namespace Sciendo.MusicBrainz
 {
     public static class ExtensionMethods
     {
-        public static Music CreateNeo4JMatchingVersion(this Music original)
+        public static MusicBase CreateNeo4JMatchingVersion(this MusicBase original)
         {
-            return new FileAnalysed
+            return new MusicBase
             {
-                Album = Sanitize(original.Album),
-                AlbumArtist = Sanitize(original.AlbumArtist),
-                Artist = Sanitize(original.Artist),
+                Album = new Item {Name= Sanitize(original.Album.Name),Id=original.Album.Id,FixSuggestion = original.Album.FixSuggestion},
+                AlbumArtist = new Item { Name = Sanitize(original.AlbumArtist.Name), Id = original.AlbumArtist.Id,FixSuggestion=original.AlbumArtist.FixSuggestion },
+                Artist = new Item { Name = Sanitize(original.Artist.Name), Id = original.Artist.Id, FixSuggestion=original.Artist.FixSuggestion },
                 FilePath = MiniSanitize(original.FilePath),
-                FixSuggestion = original.FixSuggestion,
-                FixSuggestions = original.FixSuggestions,
-                Id = original.Id,
-                Id3TagIncomplete = original.Id3TagIncomplete,
-                InCollectionPath = original.InCollectionPath,
-                MarkedAsPartOfCollection = original.MarkedAsPartOfCollection,
-                Title = Sanitize(original.Title),
-                Track = original.Track
+                Title = new Item { Name = Sanitize(original.Title.Name), Id = original.Title.Id, FixSuggestion=original.Title.FixSuggestion }
             };
         }
 
-        public static Music CreateNeo4JUpdatingVersion(this Music original)
+        public static MusicBase CreateNeo4JUpdatingVersion(this MusicBase original)
         {
-            return new Music
+            return new MusicBase
             {
-                Album = HtmlDecode(original.Album),
-                AlbumArtist = HtmlDecode(original.AlbumArtist),
-                Artist = HtmlDecode(original.Artist),
+                Album = new Item { Name = HtmlDecode(original.Album.Name), Id = original.Album.Id, FixSuggestion = original.Album.FixSuggestion },
+                AlbumArtist = new Item { Name = HtmlDecode(original.AlbumArtist.Name), Id = original.AlbumArtist.Id, FixSuggestion = original.AlbumArtist.FixSuggestion },
+                Artist = new Item { Name = HtmlDecode(original.Artist.Name), Id = original.Artist.Id, FixSuggestion = original.Artist.FixSuggestion },
                 FilePath = MiniSanitize(original.FilePath),
-                Title = HtmlDecode(original.Title),
-                Track = original.Track
+                Title = new Item { Name = HtmlDecode(original.Title.Name), Id = original.Title.Id, FixSuggestion = original.Title.FixSuggestion }
             };
         }
 

@@ -92,14 +92,14 @@ namespace Sciendo.MusicBrainz
             if (AllResults != null && AllResults.Any())
                 if (string.IsNullOrEmpty(unMatched))
                 {
-                    UpSertSave(matched,(Music f)=> { return f.MatchStatus != MatchStatus.ErrorMatching; });
-                    UpSertSave(matchingErrors, (Music f) => { return f.MatchStatus == MatchStatus.ErrorMatching; });
+                    UpSertSave(matched,(Music f)=> { return f.AllItemsMatched(); });
+                    UpSertSave(matchingErrors, (Music f) => { return f.AnyItemsWithErrors(); });
                 }
                 else
                 {
-                    UpSertSave(matched,(Music f)=> { return f.MatchStatus==MatchStatus.Matched; });
-                    UpSertSave(unMatched, (Music f) => { return f.MatchStatus==MatchStatus.UnMatched; });
-                    UpSertSave(matchingErrors, (Music f) => { return f.MatchStatus == MatchStatus.ErrorMatching; });
+                    UpSertSave(matched,(Music f)=> { return f.AllItemsMatched(); });
+                    UpSertSave(unMatched, (Music f) => { return f.AnyItemsWithUnMatched(); });
+                    UpSertSave(matchingErrors, (Music f) => { return f.AnyItemsWithErrors(); });
                 }
         }
     }

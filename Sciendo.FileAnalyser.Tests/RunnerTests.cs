@@ -1,10 +1,11 @@
-﻿using NUnit.Framework;
+﻿using System.Linq;
+using NUnit.Framework;
 using Rhino.Mocks;
 using Sciendo.FilesAnalyser;
 using Sciendo.MusicMatch.Contracts;
 using TagLib.Id3v2;
 
-namespace Sciendo.MusicBrainz.Match.Tests
+namespace Sciendo.FileAnalyser.Tests
 {
     [TestFixture]
     public class RunnerTests
@@ -67,11 +68,11 @@ namespace Sciendo.MusicBrainz.Match.Tests
             mockFileSystem.Expect(m => m.GetFiles("..", new[] { ".mp3" })).Return(new [] {"file1.mp3","file2.mp3"});
             mockFileSystem.Expect(m => m.FileExists("file1.mp3")).Return(true);
             mockFileSystem.Expect(m => m.FileExists("file2.mp3")).Return(true);
-            mockFileSystem.Expect(m => m.ReadTagFromFile("file1.mp3")).Return(new Tag());
-            mockFileSystem.Expect(m => m.ReadTagFromFile("file2.mp3")).Return(new Tag());
+            mockFileSystem.Expect(m => m.ReadTagFromFile("file1.mp3")).Return(new Tag() );
+            mockFileSystem.Expect(m => m.ReadTagFromFile("file2.mp3")).Return(new Tag() { Title = "my song 1", Album = "my album 1", Artists = new[] { "my artist 1" }, AlbumArtists = new[] { "some other marker" } });
 
-            mockAnalyser.Expect(m => m.AnalyseFile("file1.mp3")).Return(new Music()).IgnoreArguments();
-            mockAnalyser.Expect(m => m.AnalyseFile("file2.mp3")).Return(new Music()).IgnoreArguments();
+            mockAnalyser.Expect(m => m.AnalyseFile("file1.mp3")).Return(new Music() {Artist=new Item {Name="artist 1"} }).IgnoreArguments();
+            mockAnalyser.Expect(m => m.AnalyseFile("file2.mp3")).Return(new Music() { Artist = new Item { Name = "artist 1" } }).IgnoreArguments();
             var runner = new Sciendo.FilesAnalyser.Runner(mockFileSystem, "..", new[] { ".mp3" }, mockAnalyser);
             runner.Start();
             Assert.IsNotNull(runner.FilesAnalysed);
@@ -79,6 +80,30 @@ namespace Sciendo.MusicBrainz.Match.Tests
             Assert.AreEqual(2,runner.FilesAnalysed.Count);
 
         }
+
+        [Test]
+        public void StartMarkOneAsPossiblePartOfCollection()
+        {
+            var mockAnalyser = MockRepository.GenerateStub<IAnalyser>();
+            var mockFileSystem = MockRepository.GenerateStub<IFileSystem>();
+            mockFileSystem.Expect(m => m.GetLeafDirectories("..")).Return(null);
+            mockFileSystem.Expect(m => m.GetFiles("..", new[] { ".mp3" })).Return(new[] { "file1.mp3", "file2.mp3" });
+            mockFileSystem.Expect(m => m.FileExists("file1.mp3")).Return(true);
+            mockFileSystem.Expect(m => m.FileExists("file2.mp3")).Return(true);
+            mockFileSystem.Expect(m => m.ReadTagFromFile("file1.mp3")).Return(new Tag());
+            mockFileSystem.Expect(m => m.ReadTagFromFile("file2.mp3")).Return(new Tag() { Title = "my song 1", Album = "my album 1", Artists = new[] { "my artist 1" }, AlbumArtists = new[] { "some other marker" } });
+
+            mockAnalyser.Expect(m => m.AnalyseFile("file1.mp3")).Return(new Music() { TagAnalysis = new TagAnalysis{Id3TagIncomplete =false}, Artist = new Item { Name = "artist 1" }});
+            mockAnalyser.Expect(m => m.AnalyseFile("file2.mp3")).Return(new Music() { TagAnalysis = new TagAnalysis { Id3TagIncomplete = false },Artist = new Item { Name = "artist 2" } });
+            var runner = new Sciendo.FilesAnalyser.Runner(mockFileSystem, "..", new[] { ".mp3" }, mockAnalyser);
+            runner.Start();
+            Assert.IsNotNull(runner.FilesAnalysed);
+            Assert.IsNotEmpty(runner.FilesAnalysed);
+            Assert.AreEqual(2, runner.FilesAnalysed.Count);
+            Assert.True(runner.FilesAnalysed.Any(f=>f.TagAnalysis.PossiblePartOfACollection));
+
+        }
+
         [Test]
         public void StartEmptyFoldersUnderPath()
         {

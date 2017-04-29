@@ -7,9 +7,9 @@ namespace Sciendo.MusicBrainz
     {
         public string File { get; private set; }
 
-        public MatchStatus MatchStatus { get; private set; }
+        public ExecutionStatus MatchStatus { get; private set; }
 
-        public CheckMatchingProgressEventArgs(string file, MatchStatus matchStatus)
+        public CheckMatchingProgressEventArgs(string file, ExecutionStatus matchStatus)
         {
             File = file;
             MatchStatus = matchStatus;

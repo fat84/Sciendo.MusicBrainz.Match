@@ -1,10 +1,9 @@
-﻿using System;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using Rhino.Mocks;
 using Sciendo.FilesAnalyser;
 using TagLib.Id3v2;
 
-namespace Sciendo.MusicBrainz.Match.Tests
+namespace Sciendo.FileAnalyser.Tests
 {
     [TestFixture]
     public class FileAnalyserTests
@@ -12,14 +11,14 @@ namespace Sciendo.MusicBrainz.Match.Tests
         [Test]
         public void FileAnalyserNoCollectionPaths()
         {
-            Assert.That(() => new FileAnalyser(null, null,null), Throws.ArgumentNullException);
+            Assert.That(() => new FilesAnalyser.FileAnalyser(null, null,null), Throws.ArgumentNullException);
 
         }
 
         [Test]
         public void FileAnalyserNoFileSystemInstance()
         {
-            Assert.That(() => new FileAnalyser(new [] {"abc"}, null,null), Throws.ArgumentNullException);
+            Assert.That(() => new FilesAnalyser.FileAnalyser(new [] {"abc"}, null,null), Throws.ArgumentNullException);
 
         }
 
@@ -29,7 +28,7 @@ namespace Sciendo.MusicBrainz.Match.Tests
             var collectionPaths = new string[] { "..", "abc" };
             var FileSystemMock = MockRepository.GenerateStub<IFileSystem>();
             FileSystemMock.Expect(m => m.DirectoriesExist(collectionPaths)).Return(false);
-            Assert.That(() => new FileAnalyser(collectionPaths, FileSystemMock,null), Throws.ArgumentNullException);
+            Assert.That(() => new FilesAnalyser.FileAnalyser(collectionPaths, FileSystemMock,null), Throws.ArgumentNullException);
 
         }
 
@@ -39,7 +38,7 @@ namespace Sciendo.MusicBrainz.Match.Tests
             var collectionPaths = new string[] {"..", "abc"};
             var FileSystemMock = MockRepository.GenerateStub<IFileSystem>();
             FileSystemMock.Expect(m => m.DirectoriesExist(collectionPaths)).Return(false);
-            Assert.That(() => new FileAnalyser(collectionPaths, FileSystemMock,"some marker"), Throws.ArgumentException);
+            Assert.That(() => new FilesAnalyser.FileAnalyser(collectionPaths, FileSystemMock,"some marker"), Throws.ArgumentException);
         }
 
         [Test]
@@ -48,7 +47,7 @@ namespace Sciendo.MusicBrainz.Match.Tests
             var collectionPaths = new string[] { "..", "abc" };
             var FileSystemMock = MockRepository.GenerateStub<IFileSystem>();
             FileSystemMock.Expect(m => m.DirectoriesExist(collectionPaths)).Return(true);
-            var fileAnalyser = new FileAnalyser(collectionPaths, FileSystemMock,"some marker");
+            var fileAnalyser = new FilesAnalyser.FileAnalyser(collectionPaths, FileSystemMock,"some marker");
             for (int i = 0; i < collectionPaths.Length; i++)
             {
                 Assert.AreEqual(collectionPaths[i],fileAnalyser.CollectionPaths[i]);
@@ -62,7 +61,7 @@ namespace Sciendo.MusicBrainz.Match.Tests
             var collectionPaths = new string[] { "..", "abc" };
             var FileSystemMock = MockRepository.GenerateStub<IFileSystem>();
             FileSystemMock.Expect(m => m.DirectoriesExist(collectionPaths)).Return(true);
-            var fileAnalyser = new FileAnalyser(collectionPaths, FileSystemMock, "some marker");
+            var fileAnalyser = new FilesAnalyser.FileAnalyser(collectionPaths, FileSystemMock, "some marker");
 
             Assert.AreEqual("some marker",fileAnalyser.CollectionMarker);
         }
@@ -73,7 +72,7 @@ namespace Sciendo.MusicBrainz.Match.Tests
             var collectionPaths = new string[] { "..", "abc" };
             var FileSystemMock = MockRepository.GenerateStub<IFileSystem>();
             FileSystemMock.Expect(m => m.DirectoriesExist(collectionPaths)).Return(true);
-            var fileAnalyser = new FileAnalyser(collectionPaths, FileSystemMock,"some marker");
+            var fileAnalyser = new FilesAnalyser.FileAnalyser(collectionPaths, FileSystemMock,"some marker");
             Assert.That(() => fileAnalyser.AnalyseFile(default(string)), Throws.ArgumentNullException);
 
         }
@@ -85,7 +84,7 @@ namespace Sciendo.MusicBrainz.Match.Tests
             var FileSystemMock = MockRepository.GenerateStub<IFileSystem>();
             FileSystemMock.Expect(m => m.DirectoriesExist(collectionPaths)).Return(true);
 
-            var fileAnalyser = new FileAnalyser(collectionPaths, FileSystemMock,"some marker");
+            var fileAnalyser = new FilesAnalyser.FileAnalyser(collectionPaths, FileSystemMock,"some marker");
             Assert.That(() => fileAnalyser.AnalyseFile(default(string)), Throws.ArgumentNullException);
 
         }
@@ -98,7 +97,7 @@ namespace Sciendo.MusicBrainz.Match.Tests
             FileSystemMock.Expect(m => m.DirectoriesExist(collectionPaths)).Return(true);
             FileSystemMock.Expect(m => m.FileExists("myownfile.mp3")).Return(false);
 
-            var fileAnalyser = new FileAnalyser(collectionPaths, FileSystemMock, "some marker");
+            var fileAnalyser = new FilesAnalyser.FileAnalyser(collectionPaths, FileSystemMock, "some marker");
             Assert.That(() => fileAnalyser.AnalyseFile("myownfile.mp3"), Throws.ArgumentException);
 
         }
@@ -112,16 +111,16 @@ namespace Sciendo.MusicBrainz.Match.Tests
             FileSystemMock.Expect(m => m.FileExists("myownfile.mp3")).Return(true);
             FileSystemMock.Expect(m => m.ReadTagFromFile("myownfile.mp3"))
                 .Return(new Tag() {Title = "my song", Album = "my album", Artists = new[] {"my artist"}});
-            var fileAnalyser = new FileAnalyser(collectionPaths, FileSystemMock,"some marker");
+            var fileAnalyser = new FilesAnalyser.FileAnalyser(collectionPaths, FileSystemMock,"some marker");
 
             var fileAnalysed = fileAnalyser.AnalyseFile("myownfile.mp3");
-            Assert.AreEqual(fileAnalysed.Album,"my album");
-            Assert.AreEqual(fileAnalysed.Artist,"my artist");
-            Assert.AreEqual(fileAnalysed.Title,"my song");
+            Assert.AreEqual(fileAnalysed.Album.Name,"my album");
+            Assert.AreEqual(fileAnalysed.Artist.Name,"my artist");
+            Assert.AreEqual(fileAnalysed.Title.Name,"my song");
             Assert.AreEqual(fileAnalysed.FilePath,"myownfile.mp3");
-            Assert.False(fileAnalysed.InCollectionPath);
-            Assert.False(fileAnalysed.MarkedAsPartOfCollection);
-            Assert.False(fileAnalysed.Id3TagIncomplete);
+            Assert.False(fileAnalysed.TagAnalysis.InCollectionPath);
+            Assert.False(fileAnalysed.TagAnalysis.MarkedAsPartOfCollection);
+            Assert.False(fileAnalysed.TagAnalysis.Id3TagIncomplete);
             
         }
 
@@ -134,16 +133,16 @@ namespace Sciendo.MusicBrainz.Match.Tests
             FileSystemMock.Expect(m => m.FileExists("myownfile.mp3")).Return(true);
             FileSystemMock.Expect(m => m.ReadTagFromFile("myownfile.mp3"))
                 .Return(new Tag() { Title = "my song"});
-            var fileAnalyser = new FileAnalyser(collectionPaths, FileSystemMock, "some marker");
+            var fileAnalyser = new FilesAnalyser.FileAnalyser(collectionPaths, FileSystemMock, "some marker");
 
             var fileAnalysed = fileAnalyser.AnalyseFile( "myownfile.mp3");
-            Assert.True(string.IsNullOrEmpty(fileAnalysed.Album));
-            Assert.True(string.IsNullOrEmpty(fileAnalysed.Artist));
-            Assert.AreEqual(fileAnalysed.Title, "my song");
+            Assert.True(string.IsNullOrEmpty(fileAnalysed.Album.Name));
+            Assert.True(string.IsNullOrEmpty(fileAnalysed.Artist.Name));
+            Assert.AreEqual(fileAnalysed.Title.Name, "my song");
             Assert.AreEqual(fileAnalysed.FilePath, "myownfile.mp3");
-            Assert.False(fileAnalysed.InCollectionPath);
-            Assert.False(fileAnalysed.MarkedAsPartOfCollection);
-            Assert.True(fileAnalysed.Id3TagIncomplete);
+            Assert.False(fileAnalysed.TagAnalysis.InCollectionPath);
+            Assert.False(fileAnalysed.TagAnalysis.MarkedAsPartOfCollection);
+            Assert.True(fileAnalysed.TagAnalysis.Id3TagIncomplete);
 
         }
 
@@ -157,16 +156,16 @@ namespace Sciendo.MusicBrainz.Match.Tests
             FileSystemMock.Expect(m => m.ReadTagFromFile(@"..\myownfile.mp3"))
     .Return(new Tag() { Title = "my song", Album = "my album", Artists = new[] { "my artist" },AlbumArtists = new []{"some marker"}});
 
-            var fileAnalyser = new FileAnalyser(collectionPaths, FileSystemMock, "some marker");
+            var fileAnalyser = new FilesAnalyser.FileAnalyser(collectionPaths, FileSystemMock, "some marker");
 
             var fileAnalysed = fileAnalyser.AnalyseFile( @"..\myownfile.mp3");
-            Assert.AreEqual(fileAnalysed.Album, "my album");
-            Assert.AreEqual(fileAnalysed.Artist, "my artist");
-            Assert.AreEqual(fileAnalysed.Title, "my song");
+            Assert.AreEqual(fileAnalysed.Album.Name, "my album");
+            Assert.AreEqual(fileAnalysed.Artist.Name, "my artist");
+            Assert.AreEqual(fileAnalysed.Title.Name, "my song");
             Assert.AreEqual(fileAnalysed.FilePath, @"..\myownfile.mp3");
-            Assert.True(fileAnalysed.InCollectionPath);
-            Assert.True(fileAnalysed.MarkedAsPartOfCollection);
-            Assert.False(fileAnalysed.Id3TagIncomplete);
+            Assert.True(fileAnalysed.TagAnalysis.InCollectionPath);
+            Assert.True(fileAnalysed.TagAnalysis.MarkedAsPartOfCollection);
+            Assert.False(fileAnalysed.TagAnalysis.Id3TagIncomplete);
 
         }
 
@@ -179,16 +178,16 @@ namespace Sciendo.MusicBrainz.Match.Tests
             FileSystemMock.Expect(m => m.FileExists(@"myownfile.mp3")).Return(true);
             FileSystemMock.Expect(m => m.ReadTagFromFile(@"myownfile.mp3"))
     .Return(new Tag() { Title = "my song", Album = "my album", Artists = new[] { "my artist" }, AlbumArtists = new[] { "some marker" } });
-            var fileAnalyser = new FileAnalyser(collectionPaths, FileSystemMock, "some marker");
+            var fileAnalyser = new FilesAnalyser.FileAnalyser(collectionPaths, FileSystemMock, "some marker");
 
             var fileAnalysed = fileAnalyser.AnalyseFile(@"myownfile.mp3");
-            Assert.AreEqual(fileAnalysed.Album, "my album");
-            Assert.AreEqual(fileAnalysed.Artist, "my artist");
-            Assert.AreEqual(fileAnalysed.Title, "my song");
+            Assert.AreEqual(fileAnalysed.Album.Name, "my album");
+            Assert.AreEqual(fileAnalysed.Artist.Name, "my artist");
+            Assert.AreEqual(fileAnalysed.Title.Name, "my song");
             Assert.AreEqual(fileAnalysed.FilePath, @"myownfile.mp3");
-            Assert.False(fileAnalysed.InCollectionPath);
-            Assert.True(fileAnalysed.MarkedAsPartOfCollection);
-            Assert.False(fileAnalysed.Id3TagIncomplete);
+            Assert.False(fileAnalysed.TagAnalysis.InCollectionPath);
+            Assert.True(fileAnalysed.TagAnalysis.MarkedAsPartOfCollection);
+            Assert.False(fileAnalysed.TagAnalysis.Id3TagIncomplete);
 
         }
 
@@ -201,16 +200,16 @@ namespace Sciendo.MusicBrainz.Match.Tests
             FileSystemMock.Expect(m => m.FileExists(@"..\myownfile.mp3")).Return(true);
             FileSystemMock.Expect(m => m.ReadTagFromFile(@"..\myownfile.mp3"))
     .Return(new Tag() { Title = "my song", Album = "my album", Artists = new[] { "my artist" }, AlbumArtists = new[] { "some other marker" } });
-            var fileAnalyser = new FileAnalyser(collectionPaths, FileSystemMock, "some marker");
+            var fileAnalyser = new FilesAnalyser.FileAnalyser(collectionPaths, FileSystemMock, "some marker");
 
             var fileAnalysed = fileAnalyser.AnalyseFile( @"..\myownfile.mp3");
-            Assert.AreEqual(fileAnalysed.Album, "my album");
-            Assert.AreEqual(fileAnalysed.Artist, "my artist");
-            Assert.AreEqual(fileAnalysed.Title, "my song");
+            Assert.AreEqual(fileAnalysed.Album.Name, "my album");
+            Assert.AreEqual(fileAnalysed.Artist.Name, "my artist");
+            Assert.AreEqual(fileAnalysed.Title.Name, "my song");
             Assert.AreEqual(fileAnalysed.FilePath, @"..\myownfile.mp3");
-            Assert.True(fileAnalysed.InCollectionPath);
-            Assert.False(fileAnalysed.MarkedAsPartOfCollection);
-            Assert.False(fileAnalysed.Id3TagIncomplete);
+            Assert.True(fileAnalysed.TagAnalysis.InCollectionPath);
+            Assert.False(fileAnalysed.TagAnalysis.MarkedAsPartOfCollection);
+            Assert.False(fileAnalysed.TagAnalysis.Id3TagIncomplete);
 
         }
 
@@ -223,16 +222,16 @@ namespace Sciendo.MusicBrainz.Match.Tests
             FileSystemMock.Expect(m => m.FileExists(@"..\myownfile.mp3")).Return(true);
             FileSystemMock.Expect(m => m.ReadTagFromFile(@"..\myownfile.mp3"))
     .Return(new Tag() { Title = "my song", Album = "my album", Artists = new[] { "my artist" }});
-            var fileAnalyser = new FileAnalyser(collectionPaths, FileSystemMock, "some marker");
+            var fileAnalyser = new FilesAnalyser.FileAnalyser(collectionPaths, FileSystemMock, "some marker");
 
             var fileAnalysed = fileAnalyser.AnalyseFile(@"..\myownfile.mp3");
-            Assert.AreEqual(fileAnalysed.Album, "my album");
-            Assert.AreEqual(fileAnalysed.Artist, "my artist");
-            Assert.AreEqual(fileAnalysed.Title, "my song");
+            Assert.AreEqual(fileAnalysed.Album.Name, "my album");
+            Assert.AreEqual(fileAnalysed.Artist.Name, "my artist");
+            Assert.AreEqual(fileAnalysed.Title.Name, "my song");
             Assert.AreEqual(fileAnalysed.FilePath, @"..\myownfile.mp3");
-            Assert.True(fileAnalysed.InCollectionPath);
-            Assert.False(fileAnalysed.MarkedAsPartOfCollection);
-            Assert.False(fileAnalysed.Id3TagIncomplete);
+            Assert.True(fileAnalysed.TagAnalysis.InCollectionPath);
+            Assert.False(fileAnalysed.TagAnalysis.MarkedAsPartOfCollection);
+            Assert.False(fileAnalysed.TagAnalysis.Id3TagIncomplete);
 
         }
 

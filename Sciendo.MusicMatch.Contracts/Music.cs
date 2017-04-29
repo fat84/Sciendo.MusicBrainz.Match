@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -10,16 +11,28 @@ namespace Sciendo.MusicMatch.Contracts
         public Music()
         {
             TagAnalysis=new TagAnalysis();
+            Neo4jQuerries=new List<Neo4jQuery>();
         }
 
         [XmlAttribute]
         public long Id { get; set; }
         public uint Track { get; set; }
-        public MatchStatus MatchStatus { get; set; }
         public TagAnalysis TagAnalysis { get; set; }
-        [XmlText]
-        public string Neo4JMatchingQuery { get; set; }
+        public List<Neo4jQuery> Neo4jQuerries { get; set; }
 
-        public List<Neo4jQuery> Neo4jApplyQuerries { get; set; } 
+        public bool AllItemsMatched()
+        {
+            return Neo4jQuerries.All(q => q.ExecutionStatus == ExecutionStatus.Found || q.ExecutionStatus==ExecutionStatus.FoundInCache);
+        }
+
+        public bool AnyItemsWithErrors()
+        {
+            return Neo4jQuerries.Any(q => q.ExecutionStatus == ExecutionStatus.ExecutionError);
+        }
+
+        public bool AnyItemsWithUnMatched()
+        {
+            return Neo4jQuerries.Any(q => q.ExecutionStatus == ExecutionStatus.NotFound);
+        }
     }
 }

@@ -7,9 +7,9 @@ namespace Sciendo.MusicBrainz
     {
         public string FilePath { get; private set; }
 
-        public ApplyStatus ApplyStatus { get; private set; }
+        public ExecutionStatus ApplyStatus { get; private set; }
 
-        public ApplyProgressEventArgs(string filePath, ApplyStatus applyStatus)
+        public ApplyProgressEventArgs(string filePath, ExecutionStatus applyStatus)
         {
             FilePath = filePath;
             ApplyStatus = applyStatus;

@@ -45,13 +45,16 @@ namespace Sciendo.BulkMusicMatcher
             var previous = Console.ForegroundColor;
             switch (e.MatchStatus)
             {
-                case MatchStatus.Matched:
+                case ExecutionStatus.Found:
                     Console.ForegroundColor = ConsoleColor.Green;
                     break;
-               case MatchStatus.UnMatched:
-                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                case ExecutionStatus.FoundInCache:
+                    Console.ForegroundColor = ConsoleColor.DarkGreen;
                     break;
-               case MatchStatus.ErrorMatching:
+                case ExecutionStatus.NotFound:
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    break;
+               case ExecutionStatus.ExecutionError:
                     Console.ForegroundColor = ConsoleColor.Red;
                     break;
             }

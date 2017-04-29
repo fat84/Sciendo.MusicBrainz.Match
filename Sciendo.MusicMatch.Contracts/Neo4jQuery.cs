@@ -8,6 +8,10 @@ namespace Sciendo.MusicMatch.Contracts
         [XmlText]
         public string DebugQuery { get; set; }
 
-        public ApplyStatus ApplyStatus { get; set; }
+        [XmlAttribute]
+        public ExecutionStatus ExecutionStatus { get; set; }
+
+        [XmlAttribute]
+        public QueryType QueryType { get; set; }
     }
 }
