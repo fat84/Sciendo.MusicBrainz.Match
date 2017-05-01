@@ -7,12 +7,15 @@ namespace Sciendo.MusicBrainz
     {
         public string File { get; private set; }
 
-        public ExecutionStatus MatchStatus { get; private set; }
+        public ExecutionStatus ExecutionStatus { get; private set; }
 
-        public CheckMatchingProgressEventArgs(string file, ExecutionStatus matchStatus)
+        public QueryType QueryType { get; private set; }
+
+        public CheckMatchingProgressEventArgs(string file, ExecutionStatus executionStatus, QueryType queryType)
         {
             File = file;
-            MatchStatus = matchStatus;
+            ExecutionStatus = executionStatus;
+            QueryType = queryType;
         }
     }
 }

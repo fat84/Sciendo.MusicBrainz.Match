@@ -12,20 +12,33 @@ namespace Sciendo.MusicBrainz
 {
     public class RunnerCollector:IRunnerCollector
     {
+        private const string MatchedPostfixName = "matched";
+        private const string UnMatchedArtistPostfixName = "artistunmatched";
+        private const string UnMatchedAlbumPostfixName = "albumunmatched";
+        private const string UnMatchedTitlePostfixName = "titleunmatched";
+        private const string ErrorPostfixName = "error";
         private MusicBrainzAdapter musicBrainzAdapter;
-        private string source;
-        private string matched;
-        private string unMatched;
+        private readonly string _source;
+        private readonly string _matched;
         private readonly bool _append;
-        private string matchingErrors;
+        private readonly string _unMatchedArtists;
+        private readonly string _unMatchedAlbums;
+        private readonly string _unMatchedTitles;
+        private readonly string _errors;
 
-        public RunnerCollector(MusicBrainzAdapter musicBrainzAdapter, string source, string matched, string unMatched,string matchingErrors, bool append)
+        public RunnerCollector(MusicBrainzAdapter musicBrainzAdapter, string source, bool append)
         {
             this.musicBrainzAdapter = musicBrainzAdapter;
-            this.source = source;
-            this.matched = matched;
-            this.unMatched = unMatched;
-            this.matchingErrors = matchingErrors;
+            this._source = source;
+            string sourceFileName = Path.GetFileNameWithoutExtension(source);
+            string sourceDirectory = Path.GetDirectoryName(source);
+            string sourceExtension = Path.GetExtension(source);
+
+            this._matched =Path.Combine(sourceDirectory, $"{sourceFileName + MatchedPostfixName}.{sourceExtension}");
+            this._unMatchedArtists = Path.Combine(sourceDirectory, $"{sourceFileName + UnMatchedArtistPostfixName}.{sourceExtension}");
+            this._unMatchedAlbums = Path.Combine(sourceDirectory, $"{sourceFileName + UnMatchedAlbumPostfixName}.{sourceExtension}");
+            this._unMatchedTitles = Path.Combine(sourceDirectory, $"{sourceFileName + UnMatchedTitlePostfixName}.{sourceExtension}");
+            this._errors = Path.Combine(sourceDirectory, $"{sourceFileName + ErrorPostfixName}.{sourceExtension}");
             _append = append;
         }
 
@@ -37,7 +50,7 @@ namespace Sciendo.MusicBrainz
         public void Start()
         {
             AllResults=new List<Music>();
-            var filesAnalysed = Serializer.DeserializeFromFile<Music>(source);
+            var filesAnalysed = Serializer.DeserializeFromFile<Music>(_source);
             var startId = (_append)?GetStartId():0;
             AllResults = musicBrainzAdapter.CheckBulk(filesAnalysed.Where(f=>f.Id>=startId)).ToList();
         }
@@ -45,9 +58,11 @@ namespace Sciendo.MusicBrainz
         private long GetStartId()
         {
             List<long> startIds= new List<long>();
-            startIds.Add(GetStartId(matched));
-            startIds.Add(GetStartId(unMatched));
-            startIds.Add(GetStartId(matchingErrors));
+            startIds.Add(GetStartId(_matched));
+            startIds.Add(GetStartId(_unMatchedArtists));
+            startIds.Add(GetStartId(_unMatchedAlbums));
+            startIds.Add(GetStartId(_unMatchedTitles));
+            startIds.Add(GetStartId(_errors));
             return startIds.Max(s=>s);
         }
 
@@ -68,9 +83,6 @@ namespace Sciendo.MusicBrainz
             musicBrainzAdapter.StopActivity = true;
         }
 
-        
-        public List<Music> FilesAnalysed { get; }
-
         private void UpSertSave(string file, Func<Music, bool> predicate=null)
         {
             if (_append)
@@ -89,18 +101,12 @@ namespace Sciendo.MusicBrainz
         }
         public void CollectAndSave()
         {
-            if (AllResults != null && AllResults.Any())
-                if (string.IsNullOrEmpty(unMatched))
-                {
-                    UpSertSave(matched,(Music f)=> { return f.AllItemsMatched(); });
-                    UpSertSave(matchingErrors, (Music f) => { return f.AnyItemsWithErrors(); });
-                }
-                else
-                {
-                    UpSertSave(matched,(Music f)=> { return f.AllItemsMatched(); });
-                    UpSertSave(unMatched, (Music f) => { return f.AnyItemsWithUnMatched(); });
-                    UpSertSave(matchingErrors, (Music f) => { return f.AnyItemsWithErrors(); });
-                }
+            if (AllResults == null || !AllResults.Any()) return;
+            UpSertSave(_matched,(Music f)=> { return f.AllItemsMatched(); });
+            UpSertSave(_unMatchedArtists, (Music f) => { return f.AnyItemsWithUnMatched(QueryType.ArtistMatching); });
+            UpSertSave(_unMatchedAlbums, (Music f) => { return f.AnyItemsWithUnMatched(QueryType.IndividualAlbumMatching); });
+            UpSertSave(_unMatchedTitles, (Music f) => { return f.AnyItemsWithUnMatched(QueryType.TitleMatching); });
+            UpSertSave(_errors, (Music f) => { return f.AnyItemsWithErrors(); });
         }
     }
 }

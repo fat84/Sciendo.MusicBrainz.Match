@@ -148,7 +148,7 @@ namespace Sciendo.MusicBrainz
         {
             if (music.TagAnalysis.Id3TagIncomplete)
             {
-                CheckMatchingProgress?.Invoke(this, new CheckMatchingProgressEventArgs(music.FilePath, ExecutionStatus.NotExecuted));
+                CheckMatchingProgress?.Invoke(this, new CheckMatchingProgressEventArgs(music.FilePath, ExecutionStatus.NotExecuted,QueryType.None));
                 return music;
             }
             return (music.TagAnalysis.MarkedAsPartOfCollection)
@@ -158,37 +158,62 @@ namespace Sciendo.MusicBrainz
 
         private Music CheckInCollection(Music music)
         {
-            //var sanitizedFileAnalysed = music.CreateNeo4JMatchingVersion();
-            //var query = GetMatchInCollectionQuery(sanitizedFileAnalysed)
+            //var matchingVersion = music.CreateNeo4JMatchingVersion();
+            //ExecutionStatus result = LoadCollectionAlbum(music, matchingVersion.Artist.Name);
+            //if (result == ExecutionStatus.Found)
+            //{
+            //    result = LoadIndividualAlbum(music, matchingVersion.Album.Name);
+            //    if (result == ExecutionStatus.Found)
+            //    {
+            //        result = LoadTitle(music, matchingVersion.Title.Name);
+            //        CheckMatchingProgress?.Invoke(this,
+            //            new CheckMatchingProgressEventArgs($"{music.Id} - {music.FilePath}", result));
+            //    }
+            //    else
+            //    {
+            //        CheckMatchingProgress?.Invoke(this,
+            //            new CheckMatchingProgressEventArgs($"{music.Id} - {music.FilePath}", result));
+
+            //    }
+            //}
+            //else
+            //{
+            //    CheckMatchingProgress?.Invoke(this,
+            //        new CheckMatchingProgressEventArgs($"{music.Id} - {music.FilePath}", result));
+            //}
+            //return music;
+
+
+            //var query = GetMatchInCollectionQuery(matchingVersion)
             //    .Return(t => t.As<MBEntry>()).Query;
             //music.Neo4JMatchingQuery = query.DebugQueryText;
             //if (music.Id3TagIncomplete)
             //{
-            //    CheckMatchingProgress?.Invoke(this, new CheckMatchingProgressEventArgs(music.FilePath, MatchStatus.ErrorMatching));
+            //    CheckMatchingProgress?.Invoke(this, new CheckMatchingProgressEventArgs(music.FilePath, ExecutionStatus.ErrorMatching));
             //    music.FixSuggestion = "Complete the ID3 Tag.";
             //    return music;
             //}
             //MBEntry result;
             //try
             //{
-            //    result = GetMatchInCollectionQuery(sanitizedFileAnalysed).Return(t => t.As<MBEntry>()).Results.FirstOrDefault();
+            //    result = GetMatchInCollectionQuery(matchingVersion).Return(t => t.As<MBEntry>()).Results.FirstOrDefault();
             //    music.MbId = (string.IsNullOrEmpty(result?.mbid)) ? Guid.Empty : new Guid(result.mbid);
-            //    music.MatchStatus = (result == null) ? MatchStatus.UnMatched : MatchStatus.Matched;
+            //    music.ExecutionStatus = (result == null) ? ExecutionStatus.UnMatched : ExecutionStatus.Matched;
             //    music.FixSuggestion = (result == null) ? "No suggestion" : "No Fix needed.";
             //    music.FixSuggestions = new FixSuggestion();
 
             //    CheckMatchingProgress?.Invoke(this,
             //    result == null
-            //        ? new CheckMatchingProgressEventArgs($"{music.Id} - {music.FilePath}", MatchStatus.UnMatched)
-            //        : new CheckMatchingProgressEventArgs($"{music.Id} - {music.FilePath}", MatchStatus.Matched));
+            //        ? new CheckMatchingProgressEventArgs($"{music.Id} - {music.FilePath}", ExecutionStatus.UnMatched)
+            //        : new CheckMatchingProgressEventArgs($"{music.Id} - {music.FilePath}", ExecutionStatus.Matched));
 
             //}
             //catch (Exception e)
             //{
             //    music.MbId = Guid.Empty;
-            //    music.MatchStatus = MatchStatus.ErrorMatching;
+            //    music.ExecutionStatus = ExecutionStatus.ErrorMatching;
             //    CheckMatchingProgress?.Invoke(this,
-            //        new CheckMatchingProgressEventArgs($"{music.Id} - {music.FilePath}", MatchStatus.ErrorMatching));
+            //        new CheckMatchingProgressEventArgs($"{music.Id} - {music.FilePath}", ExecutionStatus.ErrorMatching));
             //}
             return music;
         }
@@ -213,24 +238,24 @@ namespace Sciendo.MusicBrainz
             ExecutionStatus result= LoadArtist(music, matchingVersion.Artist.Name);
             if (result==ExecutionStatus.Found)
             {
-                result = LoadAlbum(music,matchingVersion.Album.Name);
+                result = LoadIndividualAlbum(music,matchingVersion.Album.Name);
                 if (result==ExecutionStatus.Found)
                 {
                     result = LoadTitle(music,matchingVersion.Title.Name);
                     CheckMatchingProgress?.Invoke(this,
-                        new CheckMatchingProgressEventArgs($"{music.Id} - {music.FilePath}", result));
+                        new CheckMatchingProgressEventArgs($"{music.Id} - {music.FilePath}", result, QueryType.TitleMatching));
                 }
                 else
                 {
                     CheckMatchingProgress?.Invoke(this,
-                        new CheckMatchingProgressEventArgs($"{music.Id} - {music.FilePath}", result));
+                        new CheckMatchingProgressEventArgs($"{music.Id} - {music.FilePath}", result,QueryType.IndividualAlbumMatching));
 
                 }
             }
             else
             {
                 CheckMatchingProgress?.Invoke(this,
-                    new CheckMatchingProgressEventArgs($"{music.Id} - {music.FilePath}", result));
+                    new CheckMatchingProgressEventArgs($"{music.Id} - {music.FilePath}", result,QueryType.ArtistMatching));
             }
             return music;
         }
@@ -296,7 +321,7 @@ namespace Sciendo.MusicBrainz
             //    .WithParam("artistName", "(?ui).*" + matchingVersion.Artist + ".*");
         }
 
-        private ExecutionStatus LoadAlbum(Music music, string matchingVersionAlbumName)
+        private ExecutionStatus LoadIndividualAlbum(Music music, string matchingVersionAlbumName)
         {
             var individualAlbumQuery = GetMatchIndividualAlbumQuery(matchingVersionAlbumName,music.Artist.Id);
             music.Neo4jQuerries.Add(new Neo4jQuery

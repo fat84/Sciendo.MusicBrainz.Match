@@ -30,9 +30,9 @@ namespace Sciendo.MusicMatch.Contracts
             return Neo4jQuerries.Any(q => q.ExecutionStatus == ExecutionStatus.ExecutionError);
         }
 
-        public bool AnyItemsWithUnMatched()
+        public bool AnyItemsWithUnMatched(QueryType queryType)
         {
-            return Neo4jQuerries.Any(q => q.ExecutionStatus == ExecutionStatus.NotFound);
+            return Neo4jQuerries.Any(q => q.ExecutionStatus == ExecutionStatus.NotFound && q.QueryType==queryType);
         }
     }
 }

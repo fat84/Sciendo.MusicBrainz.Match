@@ -15,15 +15,6 @@ namespace Sciendo.BulkMusicMatcher
         [Option('a',"append",DefaultValue=false,Required=true,HelpText = "append to the output file(s)")]
         public bool Append { get; set; }
 
-        [Option('m',"matched",DefaultValue = "allnewmatched.xml", Required=true, HelpText = "file for output of the matched entries or for all the entries if no unmatched file is given.")]
-        public string Matched { get; set; }
-
-        [Option('u',"unmatched", Required=false, HelpText="file for output of the unmatched entries.")]
-        public string UnMatched { get; set; }
-
-        [Option('e',"errors",Required=true,DefaultValue = "allnewerrors.xml",HelpText = "file for output of errored entries.")]
-        public string Matchingerrors { get; set; }
-
         public string GetHelpText()
         {
             return CommandLine.Text.HelpText.AutoBuild(this).ToString();
