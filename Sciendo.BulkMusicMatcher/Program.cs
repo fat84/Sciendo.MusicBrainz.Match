@@ -7,7 +7,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Neo4jClient;
 using Sciendo.MusicBrainz;
+using Sciendo.MusicBrainz.Cache;
 using Sciendo.MusicBrainz.Configuration;
+using Sciendo.MusicBrainz.Loaders;
+using Sciendo.MusicBrainz.Queries;
 using Sciendo.MusicMatch.Contracts;
 
 namespace Sciendo.BulkMusicMatcher
@@ -23,7 +26,7 @@ namespace Sciendo.BulkMusicMatcher
         ((MusicBrainzConfigSection)ConfigurationManager.GetSection("musicBrainz"));
                 GraphClient client = new GraphClient(new Uri(connectionString.Url), connectionString.UserName, connectionString.Password);
                 client.Connect();
-                MusicBrainzAdapter musicBrainzAdapter = new MusicBrainzAdapter(client);
+                MusicBrainzAdapter musicBrainzAdapter = new MusicBrainzAdapter(client, new QueryFactory(), new LoaderFactory(new ItemMemoryCache(), new ItemMemoryCache()));
                 musicBrainzAdapter.CheckMatchingProgress += MusicBrainzAdapter_CheckProgress;
                 var runner= new RunnerCollector(musicBrainzAdapter,options.Source,options.Append);
                 var cancellationTokenSource = new CancellationTokenSource();

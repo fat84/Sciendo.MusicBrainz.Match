@@ -4,7 +4,9 @@
     {
         None,
         ArtistMatching,
-        IndividualAlbumMatching,
-        TitleMatching
+        AlbumMatching,
+        TitleMatching,
+        CollectionAlbumMatching,
+        TitleInCollectionMatching
     }
 }

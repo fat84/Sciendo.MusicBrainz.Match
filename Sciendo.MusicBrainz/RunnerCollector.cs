@@ -104,8 +104,18 @@ namespace Sciendo.MusicBrainz
             if (AllResults == null || !AllResults.Any()) return;
             UpSertSave(_matched,(Music f)=> { return f.AllItemsMatched(); });
             UpSertSave(_unMatchedArtists, (Music f) => { return f.AnyItemsWithUnMatched(QueryType.ArtistMatching); });
-            UpSertSave(_unMatchedAlbums, (Music f) => { return f.AnyItemsWithUnMatched(QueryType.IndividualAlbumMatching); });
-            UpSertSave(_unMatchedTitles, (Music f) => { return f.AnyItemsWithUnMatched(QueryType.TitleMatching); });
+            UpSertSave(_unMatchedAlbums,
+                (Music f) =>
+                {
+                    return (f.AnyItemsWithUnMatched(QueryType.AlbumMatching) ||
+                            (f.AnyItemsWithUnMatched(QueryType.CollectionAlbumMatching)));
+                });
+            UpSertSave(_unMatchedTitles,
+                (Music f) =>
+                {
+                    return f.AnyItemsWithUnMatched(QueryType.TitleMatching) ||
+                           f.AnyItemsWithUnMatched(QueryType.TitleInCollectionMatching);
+                });
             UpSertSave(_errors, (Music f) => { return f.AnyItemsWithErrors(); });
         }
     }

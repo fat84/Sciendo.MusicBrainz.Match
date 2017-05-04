@@ -1,17 +1,15 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Sciendo.MusicMatch.Contracts;
 
-namespace Sciendo.MusicBrainz
+namespace Sciendo.MusicBrainz.Cache
 {
     public class ItemMemoryCache:IMemoryCache<Item>
     {
+        
         private readonly Dictionary<string, Item> _store;
 
-        internal ItemMemoryCache()
+        public ItemMemoryCache()
         {
             _store= new Dictionary<string, Item>();
         }

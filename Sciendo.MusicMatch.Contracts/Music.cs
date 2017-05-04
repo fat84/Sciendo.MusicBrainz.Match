@@ -27,7 +27,7 @@ namespace Sciendo.MusicMatch.Contracts
 
         public bool AnyItemsWithErrors()
         {
-            return Neo4jQuerries.Any(q => q.ExecutionStatus == ExecutionStatus.ExecutionError);
+            return Neo4jQuerries.Any(q => q.ExecutionStatus == ExecutionStatus.ExecutionError || q.ExecutionStatus==ExecutionStatus.NotExecuted);
         }
 
         public bool AnyItemsWithUnMatched(QueryType queryType)

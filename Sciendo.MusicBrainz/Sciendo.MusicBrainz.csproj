@@ -62,19 +62,35 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Loaders\AlbumLoader.cs" />
     <Compile Include="ApplyProgressEventArgs.cs" />
     <Compile Include="ApplyType.cs" />
+    <Compile Include="Loaders\ArtistLoader.cs" />
     <Compile Include="CheckMatchingProgressEventArgs.cs" />
     <Compile Include="Configuration\MusicBrainzConfigSection.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="IRunnerCollector.cs" />
-    <Compile Include="IMemoryCache.cs" />
-    <Compile Include="ItemMemoryCache.cs" />
+    <Compile Include="Cache\IMemoryCache.cs" />
+    <Compile Include="Cache\ItemMemoryCache.cs" />
+    <Compile Include="Loaders\CollectionAlbumLoader.cs" />
+    <Compile Include="Loaders\ILoaderFactory.cs" />
+    <Compile Include="Loaders\Loader.cs" />
+    <Compile Include="Loaders\LoaderFactory.cs" />
+    <Compile Include="Loaders\TitleInCollectionLoader.cs" />
+    <Compile Include="Queries\IQueryFactory.cs" />
+    <Compile Include="Queries\MatchingArtistQuery.cs" />
+    <Compile Include="Queries\MatchingCollectionAlbumQuery.cs" />
+    <Compile Include="Queries\MatchingIndividualAlbumQuery.cs" />
+    <Compile Include="Queries\MatchingQuery.cs" />
+    <Compile Include="Queries\MatchingTitleInCollectionAlbumQuery.cs" />
+    <Compile Include="Queries\MatchingTitleInIndividualAlbumQuery.cs" />
     <Compile Include="MusicBrainzAdapter.cs" />
     <Compile Include="IMusicBrainzAdapter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Queries\QueryFactory.cs" />
     <Compile Include="RunnerCollector.cs" />
     <Compile Include="RunnerMatchedApplyer.cs" />
+    <Compile Include="Loaders\TitleLoader.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Sciendo.MusicBrainz.Match\Sciendo.FilesAnalyser.csproj">
