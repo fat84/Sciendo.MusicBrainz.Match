@@ -7,8 +7,11 @@ namespace Sciendo.MusicBrainz.Queries.Merging
 {
     public abstract class MergingMusicBrainzQuery:MusicBrainzQuery
     {
-        protected MergingMusicBrainzQuery(GraphClient graphClient) : base(graphClient)
+        private readonly bool _simulateOnly;
+
+        protected MergingMusicBrainzQuery(GraphClient graphClient, bool simulateOnly) : base(graphClient)
         {
+            _simulateOnly = simulateOnly;
         }
         public MergingMusicBrainzQuery UsingMusic(Music music)
         {
@@ -20,7 +23,9 @@ namespace Sciendo.MusicBrainz.Queries.Merging
 
         public override MBEntry Execute()
         {
-            return GetQuery().Results.FirstOrDefault();
-       }
+            if(!_simulateOnly)
+                return GetQuery().Results.FirstOrDefault();
+            return null;
+        }
     }
 }

@@ -28,8 +28,15 @@ namespace Sciendo.BulkMusicMatcher
         ((MusicBrainzConfigSection)ConfigurationManager.GetSection("musicBrainz"));
                 GraphClient client = new GraphClient(new Uri(configSection.Url), configSection.UserName, configSection.Password);
                 client.Connect();
-                MusicBrainzAdapter musicBrainzAdapter = new MusicBrainzAdapter(client, new MatchingQueryFactory(),new MergingQueryFactory(), 
-                    new LoaderFactory(new ItemMemoryCache(), new ItemMemoryCache()), configSection.NotFoundOptions);
+                MusicBrainzAdapter musicBrainzAdapter=null;
+                if (options.Simulate)
+                    musicBrainzAdapter = new MusicBrainzAdapter(client, new MatchingQueryFactory(),
+                        new MergingSimulationQueryFactory(),
+                        new LoaderFactory(new ItemMemoryCache(), new ItemMemoryCache()), configSection.NotFoundOptions);
+                else
+                    musicBrainzAdapter = new MusicBrainzAdapter(client, new MatchingQueryFactory(),
+                        new MergingQueryFactory(),
+                        new LoaderFactory(new ItemMemoryCache(), new ItemMemoryCache()), configSection.NotFoundOptions);
                 musicBrainzAdapter.CheckMatchingProgress += MusicBrainzAdapter_CheckProgress;
                 var runner= new RunnerCollector(musicBrainzAdapter,options.Source,options.Append);
                 var cancellationTokenSource = new CancellationTokenSource();

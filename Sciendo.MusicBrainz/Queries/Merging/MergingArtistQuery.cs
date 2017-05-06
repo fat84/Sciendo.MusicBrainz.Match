@@ -8,7 +8,7 @@ namespace Sciendo.MusicBrainz.Queries.Merging
 {
     internal class MergingArtistQuery : MergingMusicBrainzQuery
     {
-        public MergingArtistQuery(GraphClient graphClient) : base(graphClient)
+        public MergingArtistQuery(GraphClient graphClient, bool simulateOnly) : base(graphClient, simulateOnly)
         {
         }
 

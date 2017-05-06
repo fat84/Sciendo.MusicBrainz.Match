@@ -92,6 +92,7 @@
     <Compile Include="Queries\Matching\MatchingQueryFactory.cs" />
     <Compile Include="Queries\Merging\MergingMusicBrainzQuery.cs" />
     <Compile Include="Queries\Merging\MergingQueryFactory.cs" />
+    <Compile Include="Queries\Merging\MergingSimulationQueryFactory.cs" />
     <Compile Include="Queries\MusicBrainzQuery.cs" />
     <Compile Include="RunnerCollector.cs" />
     <Compile Include="RunnerMatchedApplyer.cs" />

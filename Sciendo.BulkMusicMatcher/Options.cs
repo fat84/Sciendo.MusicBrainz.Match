@@ -15,6 +15,8 @@ namespace Sciendo.BulkMusicMatcher
         [Option('a',"append",DefaultValue=false,Required=true,HelpText = "append to the output file(s)")]
         public bool Append { get; set; }
 
+        [Option('s', "simulate", DefaultValue = true, Required = true, HelpText = "do not persist changes only simulate merges.")]
+        public bool Simulate { get; set; }
         public string GetHelpText()
         {
             return CommandLine.Text.HelpText.AutoBuild(this).ToString();
