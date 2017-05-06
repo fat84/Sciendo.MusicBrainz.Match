@@ -11,6 +11,8 @@ using Sciendo.MusicBrainz.Cache;
 using Sciendo.MusicBrainz.Configuration;
 using Sciendo.MusicBrainz.Loaders;
 using Sciendo.MusicBrainz.Queries;
+using Sciendo.MusicBrainz.Queries.Matching;
+using Sciendo.MusicBrainz.Queries.Merging;
 using Sciendo.MusicMatch.Contracts;
 
 namespace Sciendo.BulkMusicMatcher
@@ -22,11 +24,12 @@ namespace Sciendo.BulkMusicMatcher
             var options = new Options();
             if (CommandLine.Parser.Default.ParseArguments(args, options))
             {
-                var connectionString =
+                var configSection =
         ((MusicBrainzConfigSection)ConfigurationManager.GetSection("musicBrainz"));
-                GraphClient client = new GraphClient(new Uri(connectionString.Url), connectionString.UserName, connectionString.Password);
+                GraphClient client = new GraphClient(new Uri(configSection.Url), configSection.UserName, configSection.Password);
                 client.Connect();
-                MusicBrainzAdapter musicBrainzAdapter = new MusicBrainzAdapter(client, new QueryFactory(), new LoaderFactory(new ItemMemoryCache(), new ItemMemoryCache()));
+                MusicBrainzAdapter musicBrainzAdapter = new MusicBrainzAdapter(client, new MatchingQueryFactory(),new MergingQueryFactory(), 
+                    new LoaderFactory(new ItemMemoryCache(), new ItemMemoryCache()), configSection.NotFoundOptions);
                 musicBrainzAdapter.CheckMatchingProgress += MusicBrainzAdapter_CheckProgress;
                 var runner= new RunnerCollector(musicBrainzAdapter,options.Source,options.Append);
                 var cancellationTokenSource = new CancellationTokenSource();

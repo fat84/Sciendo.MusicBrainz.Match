@@ -1,12 +1,12 @@
-﻿using System;
-using Neo4jClient;
+﻿using Neo4jClient;
+using Sciendo.MusicBrainz.Queries.Merging;
 using Sciendo.MusicMatch.Contracts;
 
-namespace Sciendo.MusicBrainz.Queries
+namespace Sciendo.MusicBrainz.Queries.Matching
 {
-    public class QueryFactory : IQueryFactory
+    public class MatchingQueryFactory : IQueryFactory<MatchingMusicBrainzQuery>
     {
-        public MatchingQuery Get(QueryType queryType, GraphClient graphClient)
+        public MatchingMusicBrainzQuery Get(QueryType queryType, GraphClient graphClient)
         {
             switch (queryType)
             {

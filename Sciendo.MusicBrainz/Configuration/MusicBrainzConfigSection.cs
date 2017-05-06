@@ -30,5 +30,11 @@ namespace Sciendo.MusicBrainz.Configuration
             set { this["password"] = value; }
         }
 
+        [ConfigurationProperty("notFoundOptions")]
+        public NotFoundOptions NotFoundOptions
+        {
+            get { return (NotFoundOptions) this["notFoundOptions"]; }
+            set { this["notFoundOptions"] = value; }
+        }
     }
 }

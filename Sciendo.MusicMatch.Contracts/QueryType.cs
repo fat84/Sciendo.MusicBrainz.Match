@@ -7,6 +7,7 @@
         AlbumMatching,
         TitleMatching,
         CollectionAlbumMatching,
-        TitleInCollectionMatching
+        TitleInCollectionMatching,
+        ArtistMerging
     }
 }

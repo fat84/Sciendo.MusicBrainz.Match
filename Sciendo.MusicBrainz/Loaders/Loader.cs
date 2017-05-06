@@ -1,23 +1,34 @@
 ﻿using System;
 using Sciendo.MusicBrainz.Cache;
 using Sciendo.MusicBrainz.Queries;
+using Sciendo.MusicBrainz.Queries.Matching;
+using Sciendo.MusicBrainz.Queries.Merging;
 using Sciendo.MusicMatch.Contracts;
 
 namespace Sciendo.MusicBrainz.Loaders
 {
     public abstract class Loader
     {
-        protected MatchingQuery MatchingQuery { get; private set; }
+        protected MatchingMusicBrainzQuery MatchingQuery { get; private set; }
         protected ItemMemoryCache Cache { get; }
 
         protected abstract string CacheKey { get; }
 
-        public Loader UsingMatchingQuery(MatchingQuery matchingQuery)
+        public Loader UsingMatchingQuery(MatchingMusicBrainzQuery matchingQuery)
         {
             MatchingQuery = matchingQuery;
             return this;
 
         }
+
+        public Loader UsingMergingQuery(MergingMusicBrainzQuery mergingQuery)
+        {
+            MergingQuery = mergingQuery;
+            return this;
+        }
+
+        public MergingMusicBrainzQuery MergingQuery { get; private set; }
+
         protected Loader(ItemMemoryCache cache)
         {
             Cache = cache;
@@ -25,25 +36,57 @@ namespace Sciendo.MusicBrainz.Loaders
 
         public ExecutionStatus Load()
         {
+            var result = TryMatching();
+            if (MergingQuery != null && result!=ExecutionStatus.Found)
+                result = TryCreating();
+            return result;
+        }
+
+        private ExecutionStatus TryCreating()
+        {
+            var result = ExecutionStatus.NotExecuted;
+
+            MergingQuery.Music.Neo4jQuerries.Add(new Neo4jQuery
+            {
+                ExecutionStatus = result,
+                DebugQuery = MergingQuery.QueryText,
+                QueryType = MergingQuery.QueryType
+            });
+            try
+            {
+                result = LoadItemFromStore(MergingQuery, ExecutionStatus.ExecutionError);
+            }
+            catch (Exception e)
+            {
+                result = ExecutionStatus.ExecutionError;
+            }
+            return result;
+        }
+
+        private ExecutionStatus TryMatching()
+        {
+            var result = ExecutionStatus.NotExecuted;
+
             MatchingQuery.Music.Neo4jQuerries.Add(new Neo4jQuery
             {
-                ExecutionStatus = ExecutionStatus.NotExecuted,
-                DebugQuery = MatchingQuery.GetQueryForDisplay(),
+                ExecutionStatus = result,
+                DebugQuery = MatchingQuery.QueryText,
                 QueryType = MatchingQuery.QueryType
             });
             try
             {
-                if(Cache==null)
-                    return LoadItemFromStore();
-                return TryLoadItemFromCache()
-                    ? MatchingQuery.GetExecutionStatus()
-                    : LoadItemFromStore();
+                if (Cache == null)
+                    result = LoadItemFromStore(MatchingQuery,ExecutionStatus.NotFound);
+                else
+                    result = TryLoadItemFromCache()
+                        ? MatchingQuery.GetExecutionStatus()
+                        : LoadItemFromStore(MatchingQuery, ExecutionStatus.NotFound);
             }
             catch (Exception e)
             {
-                return ExecutionStatus.ExecutionError;
+                result = ExecutionStatus.ExecutionError;
             }
-
+            return result;
         }
 
         protected abstract Item CurrentItem { get; set; }
@@ -59,10 +102,10 @@ namespace Sciendo.MusicBrainz.Loaders
             return true;
         }
 
-        private ExecutionStatus LoadItemFromStore()
+        private ExecutionStatus LoadItemFromStore(MusicBrainzQuery currentQuery, ExecutionStatus defaultExecutionStatus)
         {
-            var result = MatchingQuery.Execute(CurrentItem.Name);
-            var executionStatus = ExecutionStatus.NotFound;
+            var result = currentQuery.Execute();
+            var executionStatus = defaultExecutionStatus;
             if (result != null)
             {
                 CurrentItem.Id = new Guid(result.mbid);
@@ -71,7 +114,7 @@ namespace Sciendo.MusicBrainz.Loaders
                 executionStatus = ExecutionStatus.Found;
             }
             Cache?.Put(CacheKey, CurrentItem);
-            MatchingQuery.RecordExecutionStatus(executionStatus);
+            currentQuery.RecordExecutionStatus(executionStatus);
             return executionStatus;
         }
 

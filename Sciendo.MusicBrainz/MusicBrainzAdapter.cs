@@ -5,8 +5,11 @@ using System.Linq.Expressions;
 using Neo4jClient;
 using Neo4jClient.Cypher;
 using Sciendo.MusicBrainz.Cache;
+using Sciendo.MusicBrainz.Configuration;
 using Sciendo.MusicBrainz.Loaders;
 using Sciendo.MusicBrainz.Queries;
+using Sciendo.MusicBrainz.Queries.Matching;
+using Sciendo.MusicBrainz.Queries.Merging;
 using Sciendo.MusicMatch.Contracts;
 
 namespace Sciendo.MusicBrainz
@@ -14,17 +17,21 @@ namespace Sciendo.MusicBrainz
     public class MusicBrainzAdapter:IMusicBrainzAdapter
     {
         private readonly GraphClient _graphClient;
-        private readonly IQueryFactory _queryFactory;
+        private readonly IQueryFactory<MatchingMusicBrainzQuery> _matchingQueryFactory;
+        private readonly IQueryFactory<MergingMusicBrainzQuery> _mergingQueryFactory;
         private readonly ItemMemoryCache _artistCache;
         private readonly ItemMemoryCache _individualAlbumCache;
         private readonly ItemMemoryCache _collectionAlbumCache;
         private readonly ILoaderFactory _loaderFactory;
+        private readonly NotFoundOptions _notFoundOptions;
 
-        public MusicBrainzAdapter(GraphClient graphClient, IQueryFactory queryFactory,ILoaderFactory loaderFactory)
+        public MusicBrainzAdapter(GraphClient graphClient, IQueryFactory<MatchingMusicBrainzQuery> matchingQueryFactory,IQueryFactory<MergingMusicBrainzQuery> mergingQueryFactory,ILoaderFactory loaderFactory, NotFoundOptions notFoundOptions)
         {
             _graphClient = graphClient;
-            _queryFactory = queryFactory;
+            _matchingQueryFactory = matchingQueryFactory;
+            _mergingQueryFactory = mergingQueryFactory;
             _loaderFactory = loaderFactory;
+            _notFoundOptions = notFoundOptions;
             _artistCache=new ItemMemoryCache();
             _individualAlbumCache= new ItemMemoryCache();
             _collectionAlbumCache=new ItemMemoryCache();
@@ -170,14 +177,18 @@ namespace Sciendo.MusicBrainz
         private Music CheckAndLoad(Music music, QueryType albumQueryType, QueryType titleQueryType)
         {
             ExecutionStatus result =
-    _loaderFactory.Get(QueryType.ArtistMatching).UsingMatchingQuery(
-        _queryFactory.Get(QueryType.ArtistMatching, _graphClient).UsingMusic(music)).Load();
+                _loaderFactory.Get(QueryType.ArtistMatching).UsingMatchingQuery(
+                        _matchingQueryFactory.Get(QueryType.ArtistMatching, _graphClient).UsingMusic(music))
+                    .UsingMergingQuery((_notFoundOptions.CreateArtist)
+                        ? _mergingQueryFactory.Get(QueryType.ArtistMerging, _graphClient)
+                        : null)
+                    .Load();
             if (result == ExecutionStatus.Found)
             {
                 result =
                     _loaderFactory.Get(albumQueryType)
                         .UsingMatchingQuery(
-                            _queryFactory.Get(albumQueryType, _graphClient)
+                            _matchingQueryFactory.Get(albumQueryType, _graphClient)
                                 .UsingMusic(music))
                         .Load();
                 if (result == ExecutionStatus.Found)
@@ -185,7 +196,7 @@ namespace Sciendo.MusicBrainz
                     result =
                         _loaderFactory.Get(titleQueryType)
                             .UsingMatchingQuery(
-                                _queryFactory.Get(titleQueryType, _graphClient)
+                                _matchingQueryFactory.Get(titleQueryType, _graphClient)
                                     .UsingMusic(music))
                             .Load();
                     CheckMatchingProgress?.Invoke(this,
